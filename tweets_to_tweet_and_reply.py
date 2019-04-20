@@ -31,30 +31,40 @@ def dump(tweet, colorize_fields=None, summarize_tweet=True):
 
 tweet_dict = {}
 org_reply_list_ids = []
-org_reply_list_text = []
+#org_reply_list_text = []
+read_line = 0
 with open("../jk_rowling_tweets/tweets.json") as infile:
     for line in infile:
         tweet = summarize(json.loads(line))
         tweet_dict[tweet["id_str"]] = tweet
+        read_line += 1
+        if read_line == 10000:
+            break
 
 print(len(tweet_dict))
 count = 0
+len_output = 0
 
-for tweet_id, tweet in tweet_dict.items():
-    try:
-        if tweet["in_reply_to_status_id_str"] is not None:
-            try:
-                org_tweet = tweet_dict[tweet["in_reply_to_status_id_str"]]
-                org_reply_list_ids.append((org_tweet["id_str"], tweet_id))
-                org_reply_list_text.append((org_tweet["full_text"], tweet["full_text"]))
-            except KeyError as e:
-                count += 1
-    except KeyError as e:
-        pass
+with open("./mongo_test.json", "w") as outfile:
+    for tweet_id, tweet in tweet_dict.items():
+        try:
+            if tweet["in_reply_to_status_id_str"] is not None:
+                try:
+                    org_tweet = tweet_dict[tweet["in_reply_to_status_id_str"]]
+                    org_reply_list_ids.append((org_tweet["id_str"], tweet_id))
+                    outfile.write(json.dumps({"org": org_tweet, "reply": tweet, "label": "undefined"})+"\n")
+                    len_output += 1
+                    if len_output == 100:
+                        break
+                        #org_reply_list_text.append((org_tweet["full_text"], tweet["full_text"]))
+                except KeyError as e:
+                    count += 1
+        except KeyError as e:
+            pass
 
 print(count)
 print(len(org_reply_list_ids))
-print(len(org_reply_list_text))
+#print(len(org_reply_list_text))
 #print(org_reply_list_text)
 
 print(len(set([a for a,_ in org_reply_list_ids])))
@@ -62,8 +72,8 @@ print(len(set([a for a,_ in org_reply_list_ids])))
 with open("../jk_rowling_tweets/reply_ids.json", "w") as outfile:
     json.dump(org_reply_list_ids, outfile)
 
-with open("../jk_rowling_tweets/reply_texts.json", "w") as outfile:
-    json.dump(org_reply_list_text, outfile)
+#with open("../jk_rowling_tweets/reply_texts.json", "w") as outfile:
+    #json.dump(org_reply_list_text, outfile)
 
 
 
