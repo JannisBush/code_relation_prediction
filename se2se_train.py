@@ -45,13 +45,17 @@ from __future__ import print_function
 
 from keras.models import Model
 from keras.layers import Dense, CuDNNLSTM, Input, Embedding, TimeDistributed, Dropout
+from keras.initializers import Constant
+from keras.preprocessing.text import Tokenizer
+from keras.preprocessing.sequence import pad_sequences
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-import re
-import string
+import os
 from keras.backend.tensorflow_backend import set_session
 from keras.utils.np_utils import to_categorical
+from sklearn.metrics import classification_report, confusion_matrix
+
 config = tf.ConfigProto()
 config.gpu_options.allow_growth = True  # dynamically grow the memory used on the GPU
 config.log_device_placement = False # to log device placement (on which device the operation ran)
@@ -66,94 +70,68 @@ data_path = 'complete_data.tsv'
 # Vectorize the data.
 
 df = pd.read_csv(data_path, sep="\t")
-data = df.loc[~df['org_dataset'].isin(['political'])].loc[df['label'].isin(['attack', 'support'])]
+data = df.loc[~df['org_dataset'].isin(['political', 'procon'])].loc[df['label'].isin(['attack', 'support'])]
 
 # Convert to lowercase and replace commas and get rid of punctuation
-exclude = set(string.punctuation)
-lines_org = data['org'].apply(lambda x: x.lower()).apply(lambda x: re.sub("'", '', x))\
-    .apply(lambda x: re.sub(",", ' COMMA', x)).apply(lambda x: ''.join(ch for ch in x if ch not in exclude))
-lines_resp = data['response'].apply(lambda x: x.lower()).apply(lambda x: re.sub("'", '', x))\
-    .apply(lambda x: re.sub(",", ' COMMA', x)).apply(lambda x: ''.join(ch for ch in x if ch not in exclude))
+tokenizer = Tokenizer()
+tokenizer.fit_on_texts(np.concatenate((data['org'].values, data['response'].values), axis=-1))
+encoder_input_data = pad_sequences(tokenizer.texts_to_sequences(data['org'].values))
+decoder_input_data = pad_sequences(tokenizer.texts_to_sequences(data['response'].values))
 
-# Create word dictionaries :
-en_words = set()
-for line in lines_org:
-    for word in line.split():
-        if word not in en_words:
-            en_words.add(word)
-
-de_words = set()
-for line in lines_resp:
-    for word in line.split():
-        if word not in de_words:
-            de_words.add(word)
-
-# get lengths and sizes :
-num_en_words = len(en_words)
-num_de_words = len(de_words)
-
-max_en_words_per_sample = max([len(sample.split()) for sample in lines_org]) + 5
-max_de_words_per_sample = max([len(sample.split()) for sample in lines_resp]) + 5
-
-num_en_samples = len(lines_org)
-num_de_samples = len(lines_resp)
-
-# Get lists of words :
-input_words = sorted(list(en_words))
-target_words = sorted(list(de_words))
-
-en_token_to_int = dict()
-en_int_to_token = dict()
-
-de_token_to_int = dict()
-de_int_to_token = dict()
-
-# Tokenizing the words ( Convert them to numbers ) :
-for i, token in enumerate(input_words):
-    en_token_to_int[token] = i
-    en_int_to_token[i] = token
-
-for i, token in enumerate(target_words):
-    de_token_to_int[token] = i
-    de_int_to_token[i] = token
-
-# initiate numpy arrays to hold the data that our seq2seq model will use:
-encoder_input_data = np.zeros(
-    (num_en_samples, max_en_words_per_sample),
-    dtype='float32')
-decoder_input_data = np.zeros(
-    (num_de_samples, max_de_words_per_sample),
-    dtype='float32')
+word_index = tokenizer.word_index
 
 convert_dict = {"attack": 0, "support": 1, "unrelated": 2}
 decoder_target = np.array([convert_dict[label] for label in data['label']])
 decoder_target_data = to_categorical(decoder_target, len(set(data['label'])))
 
-print('Number of samples:', num_en_samples)
-print('Number of unique input tokens:', num_en_words)
-print('Number of unique output tokens:', num_de_words)
-print('Max sequence length for inputs:', max_en_words_per_sample)
-print('Max sequence length for outputs:', max_de_words_per_sample)
+print('Number of samples:', len(encoder_input_data))
+print('Number of unique tokens:', len(word_index)+1)
+#  print('Max sequence length for inputs:', max_en_words_per_sample)
+#  print('Max sequence length for outputs:', max_de_words_per_sample)
 
+# first, build index mapping words in the embeddings set
+# to their embedding vector
 
-# Process samples, to get input, output, target data:
-for i, (input_text, target_text) in enumerate(zip(lines_org, lines_resp)):
-    for t, word in enumerate(input_text.split()):
-        encoder_input_data[i, t] = en_token_to_int[word]
-    for t, word in enumerate(target_text.split()):
-        decoder_input_data[i, t] = de_token_to_int[word]
+print('Indexing word vectors.')
 
+embeddings_index = {}
+os.chdir('C:')
+print(os.getcwd())
+with open('Users/Jannis/Documents/glove.42B.300d/glove.42B.300d.txt', encoding="utf8") as f:
+    for line in f:
+        word, coefs = line.split(maxsplit=1)
+        coefs = np.fromstring(coefs, 'f', sep=' ')
+        embeddings_index[word] = coefs
+
+print('Found %s word vectors.' % len(embeddings_index))
+os.chdir('F:/SS19/BA/Twitter/twitter-test')
 
 # Defining some constants:
-vec_len = 300   # Length of the vector that we will get from the embedding layer
+EMBEDDING_DIM = 300   # Length of the vector that we will get from the embedding layer
+MAX_NUM_WORDS = 20000
 latent_dim = 1024  # Hidden layers dimension
 dropout_rate = 0.2   # Rate of the dropout layers
 batch_size = 64    # Batch size
-epochs = 30  # Number of epochs
+epochs = 100  # Number of epochs
+print('Preparing embedding matrix.')
+
+# prepare embedding matrix
+num_words = min(MAX_NUM_WORDS, len(word_index)) + 1
+embedding_matrix = np.zeros((num_words, EMBEDDING_DIM))
+for word, i in word_index.items():
+    if i > MAX_NUM_WORDS:
+        continue
+    embedding_vector = embeddings_index.get(word)
+    if embedding_vector is not None:
+        # words not found in embedding index will be all-zeros.
+        embedding_matrix[i] = embedding_vector
+    else:
+        print("Word not found" + word)
 
 # Define an input sequence and process it.
 encoder_inputs = Input(shape=(None,))
-encoder_embedding = Embedding(input_dim=num_en_words, output_dim=vec_len)(encoder_inputs)
+encoder_embedding = Embedding(input_dim=num_words, output_dim=EMBEDDING_DIM,
+                              embeddings_initializer=Constant(embedding_matrix), trainable=False)(encoder_inputs)
 encoder_dropout = (TimeDistributed(Dropout(rate=dropout_rate)))(encoder_embedding)
 encoder = CuDNNLSTM(latent_dim, return_state=True)
 encoder_outputs, state_h, state_c = encoder(encoder_dropout)
@@ -165,7 +143,8 @@ encoder_states = [state_h, state_c]
 decoder_inputs = Input(shape=(None,))
 
 # Hidden layers of the decoder :
-decoder_embedding_layer = Embedding(input_dim=num_de_words, output_dim=vec_len)
+decoder_embedding_layer = Embedding(input_dim=num_words, output_dim=EMBEDDING_DIM,
+                              embeddings_initializer=Constant(embedding_matrix), trainable=False)
 decoder_embedding = decoder_embedding_layer(decoder_inputs)
 
 decoder_dropout_layer = (TimeDistributed(Dropout(rate=dropout_rate)))
@@ -203,75 +182,26 @@ model.save('s2s.h5')
 # Output will be the next target token
 # 3) Repeat with the current target token and current states
 
-print(model.evaluate([encoder_input_data, decoder_input_data], decoder_target_data, verbose=0))
+# Eval
+encoder_input_eval = pad_sequences(tokenizer.texts_to_sequences(df['org'].loc[df['org_dataset'] == 'procon'].values))
+decoder_input_eval = pad_sequences(tokenizer.texts_to_sequences(df['response'].loc[df['org_dataset'] == 'procon'].values))
+decoder_target_eval = np.array([convert_dict[label] for label in df['label'].loc[df['org_dataset'] == 'procon']])
+decoder_target_eval_data = to_categorical(decoder_target_eval, len(set(data['label'])))
+print(model.evaluate([encoder_input_eval, decoder_input_eval], decoder_target_eval_data, verbose=0))
 
-result = model.predict([encoder_input_data, decoder_input_data])
-print(result)
-print(decoder_target.shape)
-print(np.argmax(result, axis=1).shape)
-print(np.count_nonzero(decoder_target == np.argmax(result, axis=1))/num_en_samples)
+y_pred = np.argmax(model.predict([encoder_input_eval, decoder_input_eval]), axis=1)
+print("Confusion Matrix:")
+print(confusion_matrix(decoder_target_eval, y_pred))
+print("Classification Report:")
+print(classification_report(decoder_target_eval, y_pred, target_names=["attack", "support"]))
 
-
-
-
-
-# # Define sampling models
-# encoder_model = Model(encoder_inputs, encoder_states)
-#
-# decoder_state_input_h = Input(shape=(latent_dim,))
-# decoder_state_input_c = Input(shape=(latent_dim,))
-# decoder_states_inputs = [decoder_state_input_h, decoder_state_input_c]
-# decoder_outputs, state_h, state_c = decoder_lstm(
-#     decoder_inputs, initial_state=decoder_states_inputs)
-# decoder_states = [state_h, state_c]
-# decoder_outputs = decoder_dense(decoder_outputs)
-# decoder_model = Model(
-#     [decoder_inputs] + decoder_states_inputs,
-#     [decoder_outputs] + decoder_states)
-#
-# # Reverse-lookup token index to decode sequences back to
-# # something readable.
-# reverse_input_char_index = dict(
-#     (i, char) for char, i in input_token_index.items())
-# reverse_target_char_index = dict(
-#     (i, char) for char, i in target_token_index.items())
-#
-#
-# def decode_sequence(input_seq):
-#     # Encode the input as state vectors.
-#     states_value = encoder_model.predict(input_seq)
-#
-#     # Generate empty target sequence of length 1.
-#     target_seq = np.zeros((1, 1, num_decoder_tokens))
-#     # Populate the first character of target sequence with the start character.
-#     target_seq[0, 0, target_token_index['\t']] = 1.
-#
-#     # Sampling loop for a batch of sequences
-#     # (to simplify, here we assume a batch of size 1).
-#     stop_condition = False
-#     decoded_sentence = ''
-#     while not stop_condition:
-#         output_tokens, h, c = decoder_model.predict(
-#             [target_seq] + states_value)
-#
-#         # Sample a token
-#         sampled_token_index = np.argmax(output_tokens[0, -1, :])
-#         sampled_char = reverse_target_char_index[sampled_token_index]
-#         decoded_sentence += sampled_char
-#
-#         # Exit condition: either hit max length
-#         # or find stop character.
-#         if (sampled_char == '\n' or
-#            len(decoded_sentence) > max_decoder_seq_length):
-#             stop_condition = True
-#
-#         # Update the target sequence (of length 1).
-#         target_seq = np.zeros((1, 1, num_decoder_tokens))
-#         target_seq[0, 0, sampled_token_index] = 1.
-#
-#         # Update states
-#         states_value = [h, c]
-#
-#     return decoded_sentence
-#
-#
+encoder_input_eval = pad_sequences(tokenizer.texts_to_sequences(data['org'].values))
+decoder_input_eval = pad_sequences(tokenizer.texts_to_sequences(data['response'].values))
+decoder_target_eval = np.array([convert_dict[label] for label in data['label']])
+decoder_target_eval_data = to_categorical(decoder_target_eval, len(set(data['label'])))
+print(model.evaluate([encoder_input_eval, decoder_input_eval], decoder_target_eval_data, verbose=0))
+y_pred = np.argmax(model.predict([encoder_input_eval, decoder_input_eval]), axis=1)
+print("Confusion Matrix:")
+print(confusion_matrix(decoder_target_eval, y_pred))
+print("Classification Report:")
+print(classification_report(decoder_target_eval, y_pred, target_names=["attack", "support"]))
