@@ -44,9 +44,12 @@ models are more common in this domain.
 from __future__ import print_function
 
 from keras.models import Model
-from keras.layers import Input, LSTM, Dense, CuDNNLSTM
+from keras.layers import Dense, CuDNNLSTM, Input, Embedding, TimeDistributed, Dropout
 import numpy as np
+import pandas as pd
 import tensorflow as tf
+import re
+import string
 from keras.backend.tensorflow_backend import set_session
 from keras.utils.np_utils import to_categorical
 config = tf.ConfigProto()
@@ -57,92 +60,125 @@ sess = tf.Session(config=config)
 set_session(sess)  # set this TensorFlow session as the default session for Keras
 
 
-batch_size = 64  # Batch size for training.
-epochs = 5  # Number of epochs to train for.
-latent_dim = 256  # Latent dimensionality of the encoding space.
-num_samples = 10000  # Number of samples to train on.
 # Path to the data txt file on disk.
 data_path = 'complete_data.tsv'
 
 # Vectorize the data.
-input_texts = []
-target_texts = []
-target_labels = []
-input_characters = set()
-target_characters = set()
 
-lines = np.recfromcsv(data_path, delimiter='\t')
-for line in lines[: min(num_samples, len(lines) - 1)]:
-    if line[0] == 'political':
-        continue
-    if line[-2] not in ['support', 'attack', 'unrelated']:
-        continue
-    input_text = line[2]
-    target_text = line[4]
-    target_labels.append(line[-2])
-    # We use "tab" as the "start sequence" character
-    # for the targets, and "\n" as "end sequence" character.
-    target_text = '\t' + target_text + '\n'
-    input_texts.append(input_text)
-    target_texts.append(target_text)
-    for char in input_text:
-        if char not in input_characters:
-            input_characters.add(char)
-    for char in target_text:
-        if char not in target_characters:
-            target_characters.add(char)
+df = pd.read_csv(data_path, sep="\t")
+data = df.loc[~df['org_dataset'].isin(['political'])].loc[df['label'].isin(['attack', 'support'])]
 
-input_characters = sorted(list(input_characters))
-target_characters = sorted(list(target_characters))
-num_encoder_tokens = len(input_characters)
-num_decoder_tokens = len(target_characters)
-max_encoder_seq_length = max([len(txt) for txt in input_texts])
-max_decoder_seq_length = max([len(txt) for txt in target_texts])
+# Convert to lowercase and replace commas and get rid of punctuation
+exclude = set(string.punctuation)
+lines_org = data['org'].apply(lambda x: x.lower()).apply(lambda x: re.sub("'", '', x))\
+    .apply(lambda x: re.sub(",", ' COMMA', x)).apply(lambda x: ''.join(ch for ch in x if ch not in exclude))
+lines_resp = data['response'].apply(lambda x: x.lower()).apply(lambda x: re.sub("'", '', x))\
+    .apply(lambda x: re.sub(",", ' COMMA', x)).apply(lambda x: ''.join(ch for ch in x if ch not in exclude))
 
-print('Number of samples:', len(input_texts))
-print('Number of unique input tokens:', num_encoder_tokens)
-print('Number of unique output tokens:', num_decoder_tokens)
-print('Max sequence length for inputs:', max_encoder_seq_length)
-print('Max sequence length for outputs:', max_decoder_seq_length)
+# Create word dictionaries :
+en_words = set()
+for line in lines_org:
+    for word in line.split():
+        if word not in en_words:
+            en_words.add(word)
 
-input_token_index = dict(
-    [(char, i) for i, char in enumerate(input_characters)])
-target_token_index = dict(
-    [(char, i) for i, char in enumerate(target_characters)])
+de_words = set()
+for line in lines_resp:
+    for word in line.split():
+        if word not in de_words:
+            de_words.add(word)
 
+# get lengths and sizes :
+num_en_words = len(en_words)
+num_de_words = len(de_words)
+
+max_en_words_per_sample = max([len(sample.split()) for sample in lines_org]) + 5
+max_de_words_per_sample = max([len(sample.split()) for sample in lines_resp]) + 5
+
+num_en_samples = len(lines_org)
+num_de_samples = len(lines_resp)
+
+# Get lists of words :
+input_words = sorted(list(en_words))
+target_words = sorted(list(de_words))
+
+en_token_to_int = dict()
+en_int_to_token = dict()
+
+de_token_to_int = dict()
+de_int_to_token = dict()
+
+# Tokenizing the words ( Convert them to numbers ) :
+for i, token in enumerate(input_words):
+    en_token_to_int[token] = i
+    en_int_to_token[i] = token
+
+for i, token in enumerate(target_words):
+    de_token_to_int[token] = i
+    de_int_to_token[i] = token
+
+# initiate numpy arrays to hold the data that our seq2seq model will use:
 encoder_input_data = np.zeros(
-    (len(input_texts), max_encoder_seq_length, num_encoder_tokens),
+    (num_en_samples, max_en_words_per_sample),
     dtype='float32')
 decoder_input_data = np.zeros(
-    (len(input_texts), max_decoder_seq_length, num_decoder_tokens),
+    (num_de_samples, max_de_words_per_sample),
     dtype='float32')
 
 convert_dict = {"attack": 0, "support": 1, "unrelated": 2}
-decoder_target = np.array([convert_dict[label] for label in target_labels])
-decoder_target_data = to_categorical(decoder_target, 3)
-for i, (input_text, target_text) in enumerate(zip(input_texts, target_texts)):
-    for t, char in enumerate(input_text):
-        encoder_input_data[i, t, input_token_index[char]] = 1.
-    for t, char in enumerate(target_text):
-        decoder_input_data[i, t, target_token_index[char]] = 1.
+decoder_target = np.array([convert_dict[label] for label in data['label']])
+decoder_target_data = to_categorical(decoder_target, len(set(data['label'])))
 
+print('Number of samples:', num_en_samples)
+print('Number of unique input tokens:', num_en_words)
+print('Number of unique output tokens:', num_de_words)
+print('Max sequence length for inputs:', max_en_words_per_sample)
+print('Max sequence length for outputs:', max_de_words_per_sample)
+
+
+# Process samples, to get input, output, target data:
+for i, (input_text, target_text) in enumerate(zip(lines_org, lines_resp)):
+    for t, word in enumerate(input_text.split()):
+        encoder_input_data[i, t] = en_token_to_int[word]
+    for t, word in enumerate(target_text.split()):
+        decoder_input_data[i, t] = de_token_to_int[word]
+
+
+# Defining some constants:
+vec_len = 300   # Length of the vector that we will get from the embedding layer
+latent_dim = 1024  # Hidden layers dimension
+dropout_rate = 0.2   # Rate of the dropout layers
+batch_size = 64    # Batch size
+epochs = 30  # Number of epochs
 
 # Define an input sequence and process it.
-encoder_inputs = Input(shape=(None, num_encoder_tokens))
+encoder_inputs = Input(shape=(None,))
+encoder_embedding = Embedding(input_dim=num_en_words, output_dim=vec_len)(encoder_inputs)
+encoder_dropout = (TimeDistributed(Dropout(rate=dropout_rate)))(encoder_embedding)
 encoder = CuDNNLSTM(latent_dim, return_state=True)
-encoder_outputs, state_h, state_c = encoder(encoder_inputs)
+encoder_outputs, state_h, state_c = encoder(encoder_dropout)
 # We discard `encoder_outputs` and only keep the states.
 encoder_states = [state_h, state_c]
 
 # Set up the decoder, using `encoder_states` as initial state.
-decoder_inputs = Input(shape=(None, num_decoder_tokens))
+# Input layer of the decoder :
+decoder_inputs = Input(shape=(None,))
+
+# Hidden layers of the decoder :
+decoder_embedding_layer = Embedding(input_dim=num_de_words, output_dim=vec_len)
+decoder_embedding = decoder_embedding_layer(decoder_inputs)
+
+decoder_dropout_layer = (TimeDistributed(Dropout(rate=dropout_rate)))
+decoder_dropout = decoder_dropout_layer(decoder_embedding)
+
+decoder_LSTM_layer = CuDNNLSTM(latent_dim, return_sequences=False, return_state=True)
+decoder_outputs, _, _ = decoder_LSTM_layer(decoder_dropout, initial_state=encoder_states)
+
 # We set up our decoder to return full output sequences,
 # and to return internal states as well. We don't use the
 # return states in the training model, but we will use them in inference.
-decoder_lstm = CuDNNLSTM(latent_dim, return_sequences=False, return_state=True)
-decoder_outputs, _, _ = decoder_lstm(decoder_inputs,
-                                     initial_state=encoder_states)
-decoder_dense = Dense(3, activation='softmax')
+
+decoder_dense = Dense(len(set(data['label'])), activation='softmax')
 decoder_outputs = decoder_dense(decoder_outputs)
 
 # Define the model that will turn
@@ -154,7 +190,8 @@ model.compile(optimizer='rmsprop', loss='categorical_crossentropy', metrics=['ac
 model.fit([encoder_input_data, decoder_input_data], decoder_target_data,
           batch_size=batch_size,
           epochs=epochs,
-          validation_split=0.2)
+          validation_split=0.2,
+          shuffle=True)
 # Save model
 model.save('s2s.h5')
 
@@ -172,7 +209,7 @@ result = model.predict([encoder_input_data, decoder_input_data])
 print(result)
 print(decoder_target.shape)
 print(np.argmax(result, axis=1).shape)
-print(np.count_nonzero(decoder_target == np.argmax(result, axis=1))/len(input_texts))
+print(np.count_nonzero(decoder_target == np.argmax(result, axis=1))/num_en_samples)
 
 
 
