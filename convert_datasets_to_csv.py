@@ -132,7 +132,7 @@ if __name__ == '__main__':
                       '../../data/good_depatepedia/extended_attacks/secondary_attacks.xml',
                       '../../data/good_depatepedia/extended_attacks/supported_attacks.xml']
     # political
-    paths_political = ['../../data/good_PoliticalArgumentation/full_dataset.tsv']
+    paths_political = ['../../data/good_PoliticalArgumentation/balanced_dataset.tsv']
 
     # other datasets?
 
@@ -164,9 +164,9 @@ if __name__ == '__main__':
     print_summary(df_complete)
 
     # remove all duplicates
-    # There are some in ComArg and in the extended version of NoDe (the ids are mixed up, therefore ignore)
+    # There are some in ComArg, Political and in the extended version of NoDe (the ids are mixed up, therefore ignore)
     # In two cases even the labels are incorrect, therefore ignore
-    # print(df_complete[df_complete.duplicated(subset=['org', 'response'], keep=False)].loc['political'])
+    # print(df_complete[(df_complete.duplicated(subset=['org', 'response'], keep=False)) & (df_complete['org_dataset'].isin(['political']))])
     df_complete = df_complete.drop_duplicates(subset=['org', 'response'])
 
 
