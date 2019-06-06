@@ -106,6 +106,21 @@ def create_data_from_tsv(path):
     return df
 
 
+def create_data_from_tsv_agreement(path):
+    """
+
+    :param path: Path to the PoliticalArgumentation dataset
+    :return: the politicalArgumentation dataset as a pandas dataframe
+    """
+    df = pd.read_csv(path, sep='\t', header=None, names=['id', 'label', 'topic', 'org_stance', 'response_stance',
+                                                         'org', 'response'])
+    df = df.replace({'label': {'no_relation': 'unrelated'}})
+    df = df.replace({'response_stance': r'.*'}, {'response_stance': 'unknown'}, regex=True)
+    df = df.replace({'org_stance': r'.*'}, {'org_stance': 'unknown'}, regex=True)
+
+    return df
+
+
 def print_summary(dataframe):
     """
 
@@ -135,6 +150,7 @@ if __name__ == '__main__':
     paths_political = ['../../data/good_PoliticalArgumentation/balanced_dataset.tsv']
 
     # other datasets?
+    paths_agreement = ['../../data/maybe_agreement_disagreement/debatepedia_agreement_dataset.tsv']
 
     data = []
     for path in paths_comarg:
@@ -151,13 +167,17 @@ if __name__ == '__main__':
     for path in paths_political:
         data.append(create_data_from_tsv(path))
 
+    for path in paths_agreement:
+        data.append(create_data_from_tsv_agreement(path))
+
     #for data_set in data:
         #print_summary(data_set)
 
     # join all datasets
     df_complete = pd.concat(data, keys=['comargGM', 'comargUGIP', 'debate_test',
                                         'debate_train', 'procon', 'debate_extended', 'debate_ext_attacks',
-                                        'debate_ext_media', 'debate_ext_second', 'debate_ext_supp', 'political'],
+                                        'debate_ext_media', 'debate_ext_second', 'debate_ext_supp', 'political',
+                                        'agreement'],
                             sort=False, names=['org_dataset'])
     # Remove the index (org_dataset) and use a column instead
     df_complete = df_complete.reset_index(level='org_dataset')
