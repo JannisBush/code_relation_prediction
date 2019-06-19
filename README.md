@@ -1,3 +1,3 @@
-# Twitter-test
+# Relation Predicion in Argument Mining with Pre-trained Deep Bidirectional Transformers
 
-Some test scripts and outputs for Twitter Analyses 
+Code for BA Thesis
