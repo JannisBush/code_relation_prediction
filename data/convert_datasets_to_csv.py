@@ -2,6 +2,10 @@ import re
 import copy
 import xml.etree.ElementTree as ET
 import pandas as pd
+import numpy as np
+from bert import tokenization
+import matplotlib.pyplot as plt
+
 
 arg_dict = {'id': [], 'org': [], 'org_stance': [], 'response': [], 'response_stance': [], 'label': [], 'topic': []}
 
@@ -100,8 +104,12 @@ def create_data_from_tsv(path):
     df = df.rename(index=str, columns={'pair_id': 'id', 'relation': 'label', 'argument1': 'response', 'argument2': 'org',
                                        'source_arg_1': 'response_stance', 'source_arg_2': 'org_stance'})
     df = df.replace({'label': {'no_relation': 'unrelated'}})
-    df = df.replace({'response_stance': r'.*'}, {'response_stance': 'unknown'}, regex=True)
-    df = df.replace({'org_stance': r'.*'}, {'org_stance': 'unknown'}, regex=True)
+    #df = df.replace({'response_stance': r'.*'}, {'response_stance': 'unknown'}, regex=True)
+    #df = df.replace({'org_stance': r'.*'}, {'org_stance': 'unknown'}, regex=True)
+    df = df.replace({'org_stance': r'Kennedy.*'}, {'org_stance': 'Kennedy'}, regex=True)
+    df = df.replace({'response_stance': r'Kennedy.*'}, {'response_stance': 'Kennedy'}, regex=True)
+    df = df.replace({'org_stance': r'Nixon.*'}, {'org_stance': 'Nixon'}, regex=True)
+    df = df.replace({'response_stance': r'Nixon.*'}, {'response_stance': 'Nixon'}, regex=True)
 
     return df
 
@@ -187,7 +195,7 @@ if __name__ == '__main__':
     # There are some in ComArg, Political and in the extended version of NoDe (the ids are mixed up, therefore ignore)
     # In two cases even the labels are incorrect, therefore ignore
     # print(df_complete[(df_complete.duplicated(subset=['org', 'response'], keep=False)) & (df_complete['org_dataset'].isin(['political']))])
-    df_complete = df_complete.drop_duplicates(subset=['org', 'response'])
+    #df_complete = df_complete.drop_duplicates(subset=['org', 'response'])
 
 
     # Here, we only select the rows with correct labels (ignore ComArg)
@@ -204,4 +212,164 @@ if __name__ == '__main__':
     print(data_to_use.keys())
     print(data_to_use.index)
 
-    df_complete.to_csv('complete_data.tsv', encoding='utf-8', sep='\t', index=False)
+    #df_complete.to_csv('complete_data.tsv', encoding='utf-8', sep='\t', index=False)
+
+    #### NEW
+
+    # Filter only relevant datasets
+    df_complete = df_complete[df_complete["org_dataset"].isin(['debate_test',
+                                        'debate_train', 'procon', 'debate_extended', 'political'])]
+
+
+    BERT_VOCAB = './bert/uncased_L-12_H-768_A-12/vocab.txt'
+    BERT_INIT_CHKPNT = './bert/uncased_L-12_H-768_A-12/bert_model.ckpt'
+
+    # Create tokenizer
+    tokenization.validate_case_matches_checkpoint(True, BERT_INIT_CHKPNT)
+    tokenizer = tokenization.FullTokenizer(
+        vocab_file=BERT_VOCAB, do_lower_case=True)
+
+    # Count length in WordPiece tokens
+    # How many tokens (wordpiece tokenizer in org and response)
+    df_complete["org_len"] = df_complete.apply(lambda row: len(tokenizer.tokenize(row.org)), axis=1)
+    df_complete["response_len"] = df_complete.apply(lambda row: len(tokenizer.tokenize(row.response)), axis=1)
+    df_complete["complete_len"] = df_complete.apply(lambda row: row.org_len + row.response_len, axis=1)
+
+
+    # Not matching describition in the paper nor on the website
+    df_complete.loc[df_complete["org_dataset"].isin(['debate_train'])].groupby('topic')["label"].value_counts()
+    df_complete.loc[df_complete["org_dataset"].isin(['debate_test'])].groupby('topic')["label"].value_counts()
+
+
+    def count_args(x):
+        return x[['org', 'response']].stack().nunique()
+
+    def count_values(x, labels):
+        return x['label'].loc[x['label'].isin(labels)].count()
+
+    def add_sum(x, labels):
+        sums = x.sum(numeric_only=True)
+        x = x.append(sums, ignore_index=True)
+        x[labels] = x[labels].apply(np.int64)
+        return x
+
+
+    df_complete.loc[df_complete["org_dataset"].isin(['debate_test'])].groupby('topic')[['org', 'response']].apply(count_args)
+    df_complete.loc[df_complete["org_dataset"].isin(['debate_train'])].groupby('topic')[['org', 'response']].apply(count_args)
+
+    data_stats_topic = {}
+    data_stats_org = {}
+    data_stats_resp = {}
+
+    for data_set in ['debate_test','debate_train', 'procon', 'debate_extended']:
+
+        data_stats_topic[data_set] = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby('topic').apply(
+            lambda r: pd.Series({'topic': r['topic'].iloc[0], 'args': count_args(r),
+                                 'tot': count_values(r, ['attack', 'support']),
+                                 'no': count_values(r, ["attack"]), 'yes': count_values(r, ["support"])}))
+
+        #data_stats_topic[data_set] = data_stats_topic[data_set].append(data_stats_topic[data_set].sum(numeric_only=True), ignore_index=True)
+        #data_stats_topic[data_set][['tot', 'args', 'yes', 'no']] = data_stats_topic[data_set][['tot', 'args', 'yes', 'no']].apply(np.int64)
+        data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['tot', 'args', 'yes', 'no'])
+
+        data_stats_org[data_set] = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby(['org'], as_index=False).apply(
+            lambda r: pd.Series({"attacked": count_values(r, ["attack"]), "supported": count_values(r, ["support"]),
+                                 'tot': count_values(r, ['attack', 'support'])}))
+
+        data_stats_org[data_set] = add_sum(data_stats_org[data_set], ["attacked", "supported", "tot"])
+
+        data_stats_resp[data_set] = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby(['response'],
+                                                                                                        as_index=False).apply(
+            lambda r: pd.Series({"attacks": count_values(r, ["attack"]), "supports": count_values(r, ["support"]),
+                                 'tot': count_values(r, ['attack', 'support'])}))
+
+        data_stats_resp[data_set] = add_sum(data_stats_resp[data_set], ["attacks", "supports", "tot"])
+
+
+    # For political include unrelated!
+    data_set = 'political'
+    data_stats_topic[data_set] = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby('topic').apply(
+        lambda r: pd.Series(
+            {'topic': r['topic'].iloc[0], 'args': count_args(r), 'tot': count_values(r, ['attack', 'support', 'unrelated']),
+             'no': count_values(r, ["attack"]), 'yes': count_values(r, ["support"]), 'unrelated': count_values(r, ['unrelated'])}))
+
+    data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['tot', 'args', 'yes', 'no', 'unrelated'])
+
+    data_stats_org[data_set] = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby(['org'],
+                                                                                                    as_index=False).apply(
+        lambda r: pd.Series({"attacked": count_values(r, ["attack"]), "supported": count_values(r, ["support"]),
+                             "unrelated": count_values(r, ["unrelated"]), 'tot': count_values(r, ['attack', 'support', 'unrelated'])}))
+
+    data_stats_org[data_set] = add_sum(data_stats_org[data_set], ["attacked", "supported", "tot"])
+
+    data_stats_resp[data_set] = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby(['response'],
+                                                                                                    as_index=False).apply(
+        lambda r: pd.Series({"attacks": count_values(r, ["attack"]), "supports": count_values(r, ["support"]),
+                             "unrelated": count_values(r, ["unrelated"]), 'tot': count_values(r, ['attack', 'support', 'unrelated'])}))
+
+    data_stats_resp[data_set] = add_sum(data_stats_resp[data_set], ["attacks", "supports", "tot", "unrelated"])
+
+    # For political groupby Nixon-Kennedy in addition to by topic
+    print(df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby(["response_stance", "org_stance"])["label"].value_counts())
+    data_stats_author = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby(["response_stance", "org_stance"]).apply(
+        lambda r: pd.Series(
+            {'author_resp': r['response_stance'].iloc[0],
+             "author_org": r['org_stance'].iloc[0],
+            'args': count_args(r),
+             'tot': count_values(r, ['attack', 'support', 'unrelated']),
+             'no': count_values(r, ["attack"]), 'yes': count_values(r, ["support"]),
+             'unrelated': count_values(r, ['unrelated'])}))
+    data_stats_author = add_sum(data_stats_author, ['tot', 'args', 'yes', 'no', 'unrelated'])
+
+    # Unique arguments for Nixon and Kennedy
+    data_use = df_complete.loc[df_complete["org_dataset"].isin([data_set])]
+    data_use1 = data_use[['org_stance', 'org']]
+    data_use1 = data_use1.rename(index=str, columns={"org_stance": "author", "org": "text"})
+    data_use2 = data_use[['response_stance', 'response']]
+    data_use2 = data_use2.rename(index=str, columns={"response_stance": "author", "response": "text"})
+    data_use = data_use1.append(data_use2)
+    print(data_use.groupby("author").nunique())
+
+
+    # Overall stats
+    data_stats_total = df_complete.groupby('org_dataset').apply(
+        lambda r: pd.Series(
+            {'dataset': r['org_dataset'].iloc[0], 'args': count_args(r), 'tot': count_values(r, ['attack', 'support', 'unrelated']),
+             'no': count_values(r, ["attack"]), 'yes': count_values(r, ["support"]), 'unrelated': count_values(r, ['unrelated'])}))
+    data_stats_total = add_sum(data_stats_total, ['tot', 'args', 'yes', 'no', 'unrelated'])
+
+    data_stats = [data_stats_org, data_stats_author, data_stats_resp, data_stats_topic, data_stats_total]
+
+
+
+    # How often are the individual args (orgs and response) used
+    for data_set in ['debate_test','debate_train', 'procon', 'debate_extended', 'political']:
+        df_check = df_complete[df_complete['org_dataset'] == data_set]
+        print(data_set)
+        print('org', df_check['org'].nunique(), df_check.shape[0])
+        print('response', df_check['response'].nunique(), df_check.shape[0])
+        print()
+
+
+
+    # Plot distribution of length of org, resp and combined over the different datasets
+    for data_set in ['debate_test','debate_train', 'procon', 'debate_extended', 'political']:
+        df_plot = df_complete[df_complete['org_dataset'] == data_set]
+        axes = df_plot.hist(density=True, sharey=True)
+        plt.suptitle(data_set)
+        plt.show()
+
+    # Plot how many arguments attack or support an argument
+    for data_set in ['debate_test','debate_train', 'procon', 'debate_extended', 'political']:
+        df_plot = data_stats_org[data_set].iloc[:-1].apply(lambda r: pd.Series({"Attack-ratio": r.attacked/r.tot}), axis=1)
+        # Ratio broken?
+        axes = df_plot.hist(density=True)
+        plt.suptitle(data_set)
+        plt.show()
+
+    # Add mean, median, min, max length to all stats (include above in the tables)
+
+    # Repair debate_test + debate_train (internetaccess -> train, groundzero -> test)
+
+
+    # Duplicates in political?!
