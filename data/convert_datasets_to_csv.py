@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 from bert import tokenization
 import matplotlib.pyplot as plt
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 
 
 arg_dict = {'id': [], 'org': [], 'org_stance': [], 'response': [], 'response_stance': [], 'label': [], 'topic': []}
@@ -220,7 +221,6 @@ if __name__ == '__main__':
     df_complete = df_complete[df_complete["org_dataset"].isin(['debate_test',
                                         'debate_train', 'procon', 'debate_extended', 'political'])]
 
-
     BERT_VOCAB = './bert/uncased_L-12_H-768_A-12/vocab.txt'
     BERT_INIT_CHKPNT = './bert/uncased_L-12_H-768_A-12/bert_model.ckpt'
 
@@ -235,12 +235,6 @@ if __name__ == '__main__':
     df_complete["response_len"] = df_complete.apply(lambda row: len(tokenizer.tokenize(row.response)), axis=1)
     df_complete["complete_len"] = df_complete.apply(lambda row: row.org_len + row.response_len, axis=1)
 
-
-    # Not matching describition in the paper nor on the website
-    df_complete.loc[df_complete["org_dataset"].isin(['debate_train'])].groupby('topic')["label"].value_counts()
-    df_complete.loc[df_complete["org_dataset"].isin(['debate_test'])].groupby('topic')["label"].value_counts()
-
-
     def count_args(x):
         return x[['org', 'response']].stack().nunique()
 
@@ -253,23 +247,19 @@ if __name__ == '__main__':
         x[labels] = x[labels].apply(np.int64)
         return x
 
-
-    df_complete.loc[df_complete["org_dataset"].isin(['debate_test'])].groupby('topic')[['org', 'response']].apply(count_args)
-    df_complete.loc[df_complete["org_dataset"].isin(['debate_train'])].groupby('topic')[['org', 'response']].apply(count_args)
-
     data_stats_topic = {}
     data_stats_org = {}
     data_stats_resp = {}
 
+    # Create stats by topic, by org argument and by resp argument
     for data_set in ['debate_test','debate_train', 'procon', 'debate_extended']:
 
         data_stats_topic[data_set] = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby('topic').apply(
             lambda r: pd.Series({'topic': r['topic'].iloc[0], 'args': count_args(r),
                                  'tot': count_values(r, ['attack', 'support']),
-                                 'no': count_values(r, ["attack"]), 'yes': count_values(r, ["support"])}))
+                                 'no': count_values(r, ["attack"]), 'yes': count_values(r, ["support"]),
+                                 'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(), 'max_total_len': r['complete_len'].max()}))
 
-        #data_stats_topic[data_set] = data_stats_topic[data_set].append(data_stats_topic[data_set].sum(numeric_only=True), ignore_index=True)
-        #data_stats_topic[data_set][['tot', 'args', 'yes', 'no']] = data_stats_topic[data_set][['tot', 'args', 'yes', 'no']].apply(np.int64)
         data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['tot', 'args', 'yes', 'no'])
 
         data_stats_org[data_set] = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby(['org'], as_index=False).apply(
@@ -285,27 +275,29 @@ if __name__ == '__main__':
 
         data_stats_resp[data_set] = add_sum(data_stats_resp[data_set], ["attacks", "supports", "tot"])
 
-
     # For political include unrelated!
     data_set = 'political'
     data_stats_topic[data_set] = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby('topic').apply(
         lambda r: pd.Series(
             {'topic': r['topic'].iloc[0], 'args': count_args(r), 'tot': count_values(r, ['attack', 'support', 'unrelated']),
-             'no': count_values(r, ["attack"]), 'yes': count_values(r, ["support"]), 'unrelated': count_values(r, ['unrelated'])}))
+             'no': count_values(r, ["attack"]), 'yes': count_values(r, ["support"]), 'unrelated': count_values(r, ['unrelated']),
+             'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(), 'max_total_len': r['complete_len'].max()}))
 
     data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['tot', 'args', 'yes', 'no', 'unrelated'])
 
     data_stats_org[data_set] = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby(['org'],
                                                                                                     as_index=False).apply(
         lambda r: pd.Series({"attacked": count_values(r, ["attack"]), "supported": count_values(r, ["support"]),
-                             "unrelated": count_values(r, ["unrelated"]), 'tot': count_values(r, ['attack', 'support', 'unrelated'])}))
+                             "unrelated": count_values(r, ["unrelated"]), 'tot': count_values(r, ['attack', 'support', 'unrelated']),
+                             }))
 
     data_stats_org[data_set] = add_sum(data_stats_org[data_set], ["attacked", "supported", "tot"])
 
     data_stats_resp[data_set] = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby(['response'],
                                                                                                     as_index=False).apply(
         lambda r: pd.Series({"attacks": count_values(r, ["attack"]), "supports": count_values(r, ["support"]),
-                             "unrelated": count_values(r, ["unrelated"]), 'tot': count_values(r, ['attack', 'support', 'unrelated'])}))
+                             "unrelated": count_values(r, ["unrelated"]), 'tot': count_values(r, ['attack', 'support', 'unrelated']),
+                             }))
 
     data_stats_resp[data_set] = add_sum(data_stats_resp[data_set], ["attacks", "supports", "tot", "unrelated"])
 
@@ -318,7 +310,8 @@ if __name__ == '__main__':
             'args': count_args(r),
              'tot': count_values(r, ['attack', 'support', 'unrelated']),
              'no': count_values(r, ["attack"]), 'yes': count_values(r, ["support"]),
-             'unrelated': count_values(r, ['unrelated'])}))
+             'unrelated': count_values(r, ['unrelated']),
+             'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(), 'max_total_len': r['complete_len'].max()}))
     data_stats_author = add_sum(data_stats_author, ['tot', 'args', 'yes', 'no', 'unrelated'])
 
     # Unique arguments for Nixon and Kennedy
@@ -330,19 +323,18 @@ if __name__ == '__main__':
     data_use = data_use1.append(data_use2)
     print(data_use.groupby("author").nunique())
 
-
-    # Overall stats
+    # Overall stats of the different datasets
     data_stats_total = df_complete.groupby('org_dataset').apply(
         lambda r: pd.Series(
             {'dataset': r['org_dataset'].iloc[0], 'args': count_args(r), 'tot': count_values(r, ['attack', 'support', 'unrelated']),
-             'no': count_values(r, ["attack"]), 'yes': count_values(r, ["support"]), 'unrelated': count_values(r, ['unrelated'])}))
+             'no': count_values(r, ["attack"]), 'yes': count_values(r, ["support"]), 'unrelated': count_values(r, ['unrelated']),
+             'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(), 'max_total_len': r['complete_len'].max()}))
     data_stats_total = add_sum(data_stats_total, ['tot', 'args', 'yes', 'no', 'unrelated'])
 
+    # List of all stats tables
     data_stats = [data_stats_org, data_stats_author, data_stats_resp, data_stats_topic, data_stats_total]
 
-
-
-    # How often are the individual args (orgs and response) used
+    # How many individual args (orgs and response) are there (responses can also be used as orgs)
     for data_set in ['debate_test','debate_train', 'procon', 'debate_extended', 'political']:
         df_check = df_complete[df_complete['org_dataset'] == data_set]
         print(data_set)
@@ -350,26 +342,85 @@ if __name__ == '__main__':
         print('response', df_check['response'].nunique(), df_check.shape[0])
         print()
 
-
-
     # Plot distribution of length of org, resp and combined over the different datasets
     for data_set in ['debate_test','debate_train', 'procon', 'debate_extended', 'political']:
         df_plot = df_complete[df_complete['org_dataset'] == data_set]
-        axes = df_plot.hist(density=True, sharey=True)
+        #axes = df_plot.hist(density=True, sharey=True)
+        axes = df_plot.boxplot()
         plt.suptitle(data_set)
         plt.show()
 
-    # Plot how many arguments attack or support an argument
+    # Plot how many arguments attack an argument (attack-ratio), also exclude arguments only answered to once
     for data_set in ['debate_test','debate_train', 'procon', 'debate_extended', 'political']:
-        df_plot = data_stats_org[data_set].iloc[:-1].apply(lambda r: pd.Series({"Attack-ratio": r.attacked/r.tot}), axis=1)
+        df_plot = data_stats_org[data_set].iloc[:-1].apply(
+            lambda r: pd.Series({"Attack-ratio": r.attacked/r.tot,
+            "Attack-ratio (exluding arguments only attacked/supported once)": np.nan if r.tot == 1 else r.attacked/r.tot}), axis=1)
         # Ratio broken?
         axes = df_plot.hist(density=True)
         plt.suptitle(data_set)
         plt.show()
 
-    # Add mean, median, min, max length to all stats (include above in the tables)
+    # Plot how often an org argument is used
+    for data_set in ['debate_test','debate_train', 'procon', 'debate_extended', 'political']:
+        df_plot = data_stats_org[data_set].iloc[:-1]
+        df_plot = df_plot['tot']
+        # Ratio broken?
+        axes = df_plot.hist(density=True)
+        plt.suptitle(data_set)
+        plt.show()
+
+    # Plot how often an response argument is used
+    for data_set in ['debate_test', 'debate_train', 'procon', 'debate_extended', 'political']:
+        df_plot = data_stats_resp[data_set].iloc[:-1]
+        df_plot = df_plot['tot']
+        # Ratio broken?
+        axes = df_plot.hist(bins=np.arange(0,10))
+        plt.suptitle(data_set)
+        plt.show()
 
     # Repair debate_test + debate_train (internetaccess -> train, groundzero -> test)
+    # Still not the same as described in paper/website (internetaccess 2 missing, military service 2 too much)
+    df_complete.loc[(df_complete['topic'] == 'Groundzeromosque') &
+                    (df_complete['org_dataset'].isin(['debate_train','debate_test'])), 'org_dataset'] = 'debate_test'
+    df_complete.loc[(df_complete['topic'] == 'Internetaccess') & (
+        df_complete['org_dataset'].isin(['debate_train', 'debate_test'])), 'org_dataset'] = 'debate_train'
 
-
+    # Print duplicates
     # Duplicates in political?!
+    # 481, 1310 (one labelled as attack one labelled as unrelated) and 1225 + 1393 (both unrelated)
+    # What to do with it?
+    for data_set in ['debate_test', 'debate_train', 'procon', 'debate_extended', 'political']:
+        print(data_set + " Duplicates:")
+        df_check = df_complete[df_complete['org_dataset'] == data_set]
+        print(df_check[df_check.duplicated(subset=['org','response'], keep=False)])
+
+    # Visualize content?
+    # WordClouds for orgs and responses (mainly the entities of the debated issues!)
+    for data_set in ['debate_test','debate_train', 'procon', 'debate_extended', 'political']:
+        df_plot = df_complete[df_complete['org_dataset'] == data_set]
+        # Stopwords?
+        stopwords = set() # set(STOPWORDS)
+        wordcloud = WordCloud(stopwords=stopwords).generate(" ".join(text for text in df_plot['response']))
+        plt.figure()
+        plt.imshow(wordcloud, interpolation="bilinear")
+        plt.title(data_set + " Response WordCloud")
+        plt.axis("off")
+        plt.show()
+        wordcloud = WordCloud(stopwords=stopwords).generate(" ".join(text for text in df_plot['org']))
+        plt.figure()
+        plt.imshow(wordcloud, interpolation="bilinear")
+        plt.title(data_set + " Org WordCloud")
+        plt.axis("off")
+        plt.show()
+    # Maybe add a wordcloud for kennedy and for nixon?!
+    # Maybe add wordcloud attack vs support (or difference between attack and support)
+
+    # Plot distribution of top 1,2,3-grams with and without unigrams
+    # https://towardsdatascience.com/a-complete-exploratory-data-analysis-and-visualization-for-text-data-29fb1b96fb6a
+
+    # Sentiment Analysis? (Correlation between attack/support and sentiment)
+
+    # POS tags
+
+    # Scattertext attack vs support?
+    # https://kanoki.org/2019/03/17/text-data-visualization-in-python/
