@@ -6,6 +6,10 @@ import numpy as np
 from bert import tokenization
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+import scattertext as st
+import spacy
+import nltk
+from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 
 arg_dict = {'id': [], 'org': [], 'org_stance': [], 'response': [], 'response_stance': [], 'label': [], 'topic': []}
@@ -320,8 +324,8 @@ if __name__ == '__main__':
     data_use1 = data_use1.rename(index=str, columns={"org_stance": "author", "org": "text"})
     data_use2 = data_use[['response_stance', 'response']]
     data_use2 = data_use2.rename(index=str, columns={"response_stance": "author", "response": "text"})
-    data_use = data_use1.append(data_use2)
-    print(data_use.groupby("author").nunique())
+    data_nix_ken = data_use1.append(data_use2)
+    print(data_nix_ken.groupby("author").nunique())
 
     # Overall stats of the different datasets
     data_stats_total = df_complete.groupby('org_dataset').apply(
@@ -412,15 +416,77 @@ if __name__ == '__main__':
         plt.title(data_set + " Org WordCloud")
         plt.axis("off")
         plt.show()
-    # Maybe add a wordcloud for kennedy and for nixon?!
+
+    # wordcloud for kennedy and for nixon
+    stopwords = set(STOPWORDS)  # set(STOPWORDS)
+    wordcloud = WordCloud(
+        stopwords=stopwords).generate(" ".join(text for text in data_nix_ken.loc[data_nix_ken["author"]=='Nixon','text']))
+    plt.figure()
+    plt.imshow(wordcloud, interpolation="bilinear")
+    plt.title("Nixon WordCloud")
+    plt.axis("off")
+    plt.show()
+
+    stopwords = set(STOPWORDS)  # set(STOPWORDS)
+    wordcloud = WordCloud(
+        stopwords=stopwords).generate(
+        " ".join(text for text in data_nix_ken.loc[data_nix_ken["author"] == 'Kennedy', 'text']))
+    plt.figure()
+    plt.imshow(wordcloud, interpolation="bilinear")
+    plt.title("Kennedy WordCloud")
+    plt.axis("off")
+    plt.show()
+
+    # Scattertext attack vs support (only responses)
+    # https://kanoki.org/2019/03/17/text-data-visualization-in-python/
+    # https://github.com/JasonKessler/scattertext
+    nlp = spacy.load('en_core_web_sm')
+    for data_set in ['debate_test','debate_train', 'procon', 'debate_extended', 'political']:
+
+        df_plot = df_complete.loc[df_complete['org_dataset'] == data_set]
+        df_plot['parsed'] = df_plot['response'].apply(nlp)
+        corpus = st.CorpusFromParsedDocuments(df_plot, category_col='label', parsed_col='parsed').build()
+        html = st.produce_scattertext_explorer(
+            corpus, category='attack', not_category_name='support',
+            width_in_pixels=1000, minimum_term_frequency=5, transform=st.Scalers.log_scale_standardize)
+        file_name = 'plots/scattertext_attack_support' + data_set + '.html'
+        with open(file_name, 'wb') as file:
+            file.write(html.encode('utf-8'))
+
+    # Scattertext Nixon vs Kennedy
+    df_plot = data_nix_ken
+    df_plot['parsed'] = df_plot['text'].apply(nlp)
+    corpus = st.CorpusFromParsedDocuments(df_plot, category_col='author', parsed_col='parsed').build()
+    html = st.produce_scattertext_explorer(
+        corpus, category='Kennedy', not_category_name='Nixon',
+        width_in_pixels=1000, minimum_term_frequency=5, transform=st.Scalers.log_scale_standardize)
+    file_name = 'plots/scattertext_nixon_kennedy.html'
+    with open(file_name, 'wb') as file:
+        file.write(html.encode('utf-8'))
+
+    def disc_pol(x):
+        if x >= 0.05:
+            return 'positive'
+        elif x <= -0.05:
+            return 'negative'
+        else:
+            return 'neutral'
+
+    # Sentiment Analysis (Correlation between attack/support and sentiment)
+    sid = SentimentIntensityAnalyzer()
+    for data_set in ['debate_test', 'debate_train', 'procon', 'debate_extended', 'political']:
+        df_sent = df_complete.loc[df_complete['org_dataset'] == data_set]
+        df_sent['polarity'] = df_sent['response'].apply(lambda r: sid.polarity_scores(r)['compound'])
+        df_sent['discrete_polarity'] = df_sent['polarity'].apply(lambda r: disc_pol(r))
+        print(pd.crosstab(index=df_sent['discrete_polarity'], columns=df_sent['label'], margins=True))
+        # Correlation coeff etc.
+
+    # Ideas for the future:?
+
+    # Maybe POS tags?
+
     # Maybe add wordcloud attack vs support (or difference between attack and support)
 
-    # Plot distribution of top 1,2,3-grams with and without unigrams
-    # https://towardsdatascience.com/a-complete-exploratory-data-analysis-and-visualization-for-text-data-29fb1b96fb6a
-
-    # Sentiment Analysis? (Correlation between attack/support and sentiment)
-
-    # POS tags
-
-    # Scattertext attack vs support?
-    # https://kanoki.org/2019/03/17/text-data-visualization-in-python/
+    # Maybe Plot distribution of top 1,2,3-grams with and without unigrams?
+     # https://towardsdatascience.com/a-complete-exploratory-data-analysis-and-visualization-for-text-data-29fb1b96fb6a
+    # Or using Scattertext
