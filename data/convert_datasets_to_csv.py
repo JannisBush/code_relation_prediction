@@ -306,7 +306,7 @@ if __name__ == '__main__':
     data_stats_resp[data_set] = add_sum(data_stats_resp[data_set], ["attacks", "supports", "tot", "unrelated"])
 
     # For political groupby Nixon-Kennedy in addition to by topic
-    print(df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby(["response_stance", "org_stance"])["label"].value_counts())
+    # print(df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby(["response_stance", "org_stance"])["label"].value_counts())
     data_stats_author = df_complete.loc[df_complete["org_dataset"].isin([data_set])].groupby(["response_stance", "org_stance"]).apply(
         lambda r: pd.Series(
             {'author_resp': r['response_stance'].iloc[0],
@@ -448,7 +448,7 @@ if __name__ == '__main__':
         corpus = st.CorpusFromParsedDocuments(df_plot, category_col='label', parsed_col='parsed').build()
         html = st.produce_scattertext_explorer(
             corpus, category='attack', not_category_name='support',
-            width_in_pixels=1000, minimum_term_frequency=5, transform=st.Scalers.log_scale_standardize)
+            width_in_pixels=1000, minimum_term_frequency=5, transform=st.Scalers.log_scale_standardize, use_full_doc=True)
         file_name = 'plots/scattertext_attack_support' + data_set + '.html'
         with open(file_name, 'wb') as file:
             file.write(html.encode('utf-8'))
@@ -459,7 +459,7 @@ if __name__ == '__main__':
     corpus = st.CorpusFromParsedDocuments(df_plot, category_col='author', parsed_col='parsed').build()
     html = st.produce_scattertext_explorer(
         corpus, category='Kennedy', not_category_name='Nixon',
-        width_in_pixels=1000, minimum_term_frequency=5, transform=st.Scalers.log_scale_standardize)
+        width_in_pixels=1000, minimum_term_frequency=5, transform=st.Scalers.log_scale_standardize, use_full_doc=True)
     file_name = 'plots/scattertext_nixon_kennedy.html'
     with open(file_name, 'wb') as file:
         file.write(html.encode('utf-8'))
@@ -473,12 +473,26 @@ if __name__ == '__main__':
             return 'neutral'
 
     # Sentiment Analysis (Correlation between attack/support and sentiment)
+    # Maybe use another sentiment analyser? (With only positive and negative class, without neutral class)
     sid = SentimentIntensityAnalyzer()
+    sent_stats = {}
     for data_set in ['debate_test', 'debate_train', 'procon', 'debate_extended', 'political']:
         df_sent = df_complete.loc[df_complete['org_dataset'] == data_set]
         df_sent['polarity'] = df_sent['response'].apply(lambda r: sid.polarity_scores(r)['compound'])
         df_sent['discrete_polarity'] = df_sent['polarity'].apply(lambda r: disc_pol(r))
-        print(pd.crosstab(index=df_sent['discrete_polarity'], columns=df_sent['label'], margins=True))
+        sent_stats['resp' + data_set] = pd.crosstab(index=df_sent['discrete_polarity'], columns=df_sent['label'], margins=True)
+        # print(pd.crosstab(index=df_sent['discrete_polarity'], columns=df_sent['label'], margins=True))
+        # Sentiment Analysis (Correlation between sentiment of org and response and label)
+        df_sent['polarity_org'] = df_sent['org'].apply(lambda r: sid.polarity_scores(r)['compound'])
+        df_sent['discrete_polarity_org'] = df_sent['polarity_org'].apply(lambda r: disc_pol(r))
+        # print(pd.crosstab(index=df_sent['label'],
+        #                  columns=[df_sent['discrete_polarity'],df_sent['discrete_polarity_org']]))
+        sent_stats['org/resp' + data_set] = pd.crosstab(index=df_sent['label'],
+                          columns=[df_sent['discrete_polarity'],df_sent['discrete_polarity_org']])
+        # Merge to same sentiment and not same sentiment
+        df_sent['discrete_polarity_both'] = df_sent.apply(
+            lambda r: 'Same' if r['discrete_polarity'] == r['discrete_polarity_org'] else 'Different', axis=1)
+        sent_stats['both' + data_set] = pd.crosstab(df_sent['label'], df_sent['discrete_polarity_both'])
         # Correlation coeff etc.
 
     # Ideas for the future:?
