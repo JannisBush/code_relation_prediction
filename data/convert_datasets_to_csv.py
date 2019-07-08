@@ -148,22 +148,22 @@ def print_summary(dataframe):
 if __name__ == '__main__':
     pd.set_option('display.max_columns', 7)
     pd.set_option('display.max_rows', 999)
-    paths_comarg = ['../../data/good_ComArg/comarg/GM.xml','../../data/good_ComArg/comarg/UGIP.xml']
-    paths_debatepedia = ['../../data/good_depatepedia/debatepedia/debatepedia_test.xml',
-                         '../../data/good_depatepedia/debatepedia/debatepedia_train.xml']
+    paths_comarg = ['../../../data/good_ComArg/comarg/GM.xml','../../../data/good_ComArg/comarg/UGIP.xml']
+    paths_debatepedia = ['../../../data/good_depatepedia/debatepedia/debatepedia_test.xml',
+                         '../../../data/good_depatepedia/debatepedia/debatepedia_train.xml']
     # procon
-    paths_procon = ['../../data/good_depatepedia/debatepedia/procon.xml']
+    paths_procon = ['../../../data/good_depatepedia/debatepedia/procon.xml']
     # extended debatepedia
-    paths_extended = ['../../data/good_depatepedia/extended/debatepediaExtended.xml',
-                      '../../data/good_depatepedia/extended_attacks/extended_attacks.xml',
-                      '../../data/good_depatepedia/extended_attacks/mediated_attacks.xml',
-                      '../../data/good_depatepedia/extended_attacks/secondary_attacks.xml',
-                      '../../data/good_depatepedia/extended_attacks/supported_attacks.xml']
+    paths_extended = ['../../../data/good_depatepedia/extended/debatepediaExtended.xml',
+                      '../../../data/good_depatepedia/extended_attacks/extended_attacks.xml',
+                      '../../../data/good_depatepedia/extended_attacks/mediated_attacks.xml',
+                      '../../../data/good_depatepedia/extended_attacks/secondary_attacks.xml',
+                      '../../../data/good_depatepedia/extended_attacks/supported_attacks.xml']
     # political
-    paths_political = ['../../data/good_PoliticalArgumentation/balanced_dataset.tsv']
+    paths_political = ['../../../data/good_PoliticalArgumentation/balanced_dataset.tsv']
 
     # other datasets?
-    paths_agreement = ['../../data/maybe_agreement_disagreement/debatepedia_agreement_dataset.tsv']
+    paths_agreement = ['../../../data/maybe_agreement_disagreement/debatepedia_agreement_dataset.tsv']
 
     data = []
     for path in paths_comarg:
@@ -225,8 +225,8 @@ if __name__ == '__main__':
     df_complete = df_complete[df_complete["org_dataset"].isin(['debate_test',
                                         'debate_train', 'procon', 'debate_extended', 'political'])]
 
-    BERT_VOCAB = './bert/uncased_L-12_H-768_A-12/vocab.txt'
-    BERT_INIT_CHKPNT = './bert/uncased_L-12_H-768_A-12/bert_model.ckpt'
+    BERT_VOCAB = '../bert/uncased_L-12_H-768_A-12/vocab.txt'
+    BERT_INIT_CHKPNT = '../bert/uncased_L-12_H-768_A-12/bert_model.ckpt'
 
     # Create tokenizer
     tokenization.validate_case_matches_checkpoint(True, BERT_INIT_CHKPNT)
@@ -391,7 +391,7 @@ if __name__ == '__main__':
 
     # Print duplicates
     # Duplicates in political?!
-    # 481, 1310 (one labelled as attack one labelled as unrelated) and 1225 + 1393 (both unrelated)
+    # 481, 1310 (one labelled as attack one labelled as unrelated) and 1225 + 1393 (both unrelated) (topic disarmament)
     # What to do with it?
     for data_set in ['debate_test', 'debate_train', 'procon', 'debate_extended', 'political']:
         print(data_set + " Duplicates:")
@@ -449,7 +449,7 @@ if __name__ == '__main__':
         html = st.produce_scattertext_explorer(
             corpus, category='attack', not_category_name='support',
             width_in_pixels=1000, minimum_term_frequency=5, transform=st.Scalers.log_scale_standardize, use_full_doc=True)
-        file_name = 'plots/scattertext_attack_support' + data_set + '.html'
+        file_name = '../plots/scattertext_attack_support' + data_set + '.html'
         with open(file_name, 'wb') as file:
             file.write(html.encode('utf-8'))
 
@@ -460,7 +460,7 @@ if __name__ == '__main__':
     html = st.produce_scattertext_explorer(
         corpus, category='Kennedy', not_category_name='Nixon',
         width_in_pixels=1000, minimum_term_frequency=5, transform=st.Scalers.log_scale_standardize, use_full_doc=True)
-    file_name = 'plots/scattertext_nixon_kennedy.html'
+    file_name = '../plots/scattertext_nixon_kennedy.html'
     with open(file_name, 'wb') as file:
         file.write(html.encode('utf-8'))
 
