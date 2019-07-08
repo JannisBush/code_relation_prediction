@@ -387,6 +387,30 @@ class WnliProcessor(DataProcessor):
         return examples
 
 
+class NoDEProcessor(DataProcessor):
+    """Processor for the NoDE data set."""
+    
+    def get_train_examples(self, data_dir):
+        return self._create_examples(os.path.join(data_dir, "complete_data.tsv"), "train")
+    
+    def get_dev_examples(self, data_dir):
+        return self._create_examples(os.path.join(data_dir, "complete_data.tsv"), "test")
+    
+    def get_labels(self):
+        return ["attack", "support"]
+
+    def _create_examples(self, filename, set_type):
+        import pandas as pd
+        df = pd.read_csv(filename, sep='\t')
+        if set_type == "train":
+            dataset = df.loc[df['org_dataset'].isin(['debate_train', 'procon'])]
+        elif set_type == "test":
+            dataset = df.loc[df['org_dataset'].isin(['debate_test'])]
+        else:
+            sys.exit(-1)
+        return dataset.apply(lambda x: InputExample(guid=None, text_a=x["org"], text_b=x["response"], label=x["label"]), axis=1)
+
+
 def convert_examples_to_features(examples, label_list, max_seq_length,
                                  tokenizer, output_mode):
     """Loads a data file into a list of `InputBatch`s."""
@@ -542,6 +566,8 @@ def compute_metrics(task_name, preds, labels):
         return {"acc": simple_accuracy(preds, labels)}
     elif task_name == "wnli":
         return {"acc": simple_accuracy(preds, labels)}
+    elif task_name == "node":
+	    return {"acc": simple_accuracy(preds, labels)}
     else:
         raise KeyError(task_name)
 
@@ -556,6 +582,7 @@ processors = {
     "qnli": QnliProcessor,
     "rte": RteProcessor,
     "wnli": WnliProcessor,
+    "node": NoDEProcessor,
 }
 
 output_modes = {
@@ -568,4 +595,5 @@ output_modes = {
     "qnli": "classification",
     "rte": "classification",
     "wnli": "classification",
+    "node": "classification",
 }
