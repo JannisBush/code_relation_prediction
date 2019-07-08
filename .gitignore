@@ -3,3 +3,5 @@
 bert/*/
 .idea/
 */__pycache__/
+pytorch/*/
+data/*bert*

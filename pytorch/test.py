@@ -71,3 +71,33 @@ predicted_token = tokenizer.convert_ids_to_tokens([predicted_index])[0]
 assert predicted_token == 'henson'
 
 print(predictions)
+
+
+# Test skorch
+from skorch import NeuralNetClassifier
+class MyModule(torch.nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.model = model
+    def forward(self, INPUT, SEGMENT, MASK):
+        return self.model(INPUT, token_type_ids=SEGMENT , attention_mask=MASK)
+class MyDS(torch.utils.data.Dataset):
+    def __init__(self, all_input_ids, all_segment_ids, all_input_mask, all_label_ids):
+        self.X = [{"INPUT": input_id, "SEGMENT": segment_id, "MASK": input_mask} for input_id, segment_id, input_mask in zip(all_input_ids, all_segment_ids, all_input_mask) ]
+        self.Y = all_label_ids
+    def __getitem__(self, idx):
+        return self.X[idx], self.Y[idx]
+    def __len__(self):
+        return len(self.X)
+num_train_optimization_steps = 100 // args.gradient_accumulation_steps * args.num_train_epochs
+
+net = NeuralNetClassifier(MyModule, criterion=CrossEntropyLoss, lr=args.learning_rate, batch_size=args.train_batch_size, max_epochs=int(args.num_train_epochs), optimizer=BertAdam, device='cuda', train_split=None, optimizer_warmup=args.warmup_proportion,
+                         optimizer_t_total=num_train_optimization_steps)
+input_net = MyDS(all_input_ids, all_segment_ids, all_input_mask, all_label_ids)
+#print(input_net.shape)
+#print(all_label_ids.shape)
+
+net.fit(input_net, y=None)
+y_proba = net.predict_proba(input_net)
+print(y_proba)
+
