@@ -130,6 +130,7 @@ def create_data_from_tsv_agreement(path):
     df = df.replace({'label': {'no_relation': 'unrelated'}})
     df = df.replace({'response_stance': r'.*'}, {'response_stance': 'unknown'}, regex=True)
     df = df.replace({'org_stance': r'.*'}, {'org_stance': 'unknown'}, regex=True)
+    df = df.dropna()
 
     return df
 
@@ -222,8 +223,8 @@ if __name__ == '__main__':
     #### NEW
 
     # Filter only relevant datasets
-    df_complete = df_complete[df_complete["org_dataset"].isin(['debate_test',
-                                        'debate_train', 'procon', 'debate_extended', 'political'])]
+    #df_complete = df_complete[df_complete["org_dataset"].isin(['debate_test',
+     #                                   'debate_train', 'procon', 'debate_extended', 'political'])]
 
     BERT_VOCAB = '../bert/uncased_L-12_H-768_A-12/vocab.txt'
     BERT_INIT_CHKPNT = '../bert/uncased_L-12_H-768_A-12/bert_model.ckpt'
@@ -504,3 +505,6 @@ if __name__ == '__main__':
     # Maybe Plot distribution of top 1,2,3-grams with and without unigrams?
      # https://towardsdatascience.com/a-complete-exploratory-data-analysis-and-visualization-for-text-data-29fb1b96fb6a
     # Or using Scattertext
+
+    # Save complete data with repaired debate data
+    df_complete.to_csv('complete_data.tsv', encoding='utf-8', sep='\t', index=False)
