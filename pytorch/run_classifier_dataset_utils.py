@@ -205,7 +205,7 @@ class AgreementProcessor(DataProcessor):
 
 
 def convert_examples_to_features(examples, label_list, max_seq_length,
-                                 tokenizer, output_mode):
+                                 tokenizer):
     """Loads a data file into a list of `InputBatch`s."""
 
     label_map = {label : i for i, label in enumerate(label_list)}
@@ -270,12 +270,7 @@ def convert_examples_to_features(examples, label_list, max_seq_length,
         assert len(input_mask) == max_seq_length
         assert len(segment_ids) == max_seq_length
 
-        if output_mode == "classification":
-            label_id = label_map[example.label]
-        elif output_mode == "regression":
-            label_id = float(example.label)
-        else:
-            raise KeyError(output_mode)
+        label_id = label_map[example.label]
 
         if ex_index < 5:
             logger.info("*** Example ***")
@@ -350,12 +345,4 @@ processors = {
     "political-ru": partial(PoliticalProcessor, "RU"),
     "political-asu": partial(PoliticalProcessor, "ASU"),
     "agreement": AgreementProcessor,
-}
-
-output_modes = {
-    "node": "classification",
-    "political-as": "classification",
-    "political-ru": "classification",
-    "political-asu": "classification",
-    "agreement": "classification",
 }
