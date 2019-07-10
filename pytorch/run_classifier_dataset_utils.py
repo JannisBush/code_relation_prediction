@@ -82,10 +82,19 @@ class DataProcessor(object):
         """Gets the list of labels for this data set."""
         raise NotImplementedError()
 
+    def get_train_test_df(self, data_dir):
+        """Gets the train and test data as a dataframe."""
+        raise NotImplementedError()
+
 
 class NoDEProcessor(DataProcessor):
     """Processor for the NoDE data set."""
-    
+
+    def __init__(self, input_to_use):
+        """Sets the  mode for the NoDE dataset."""
+        super().__init__()
+        self.input_to_use = input_to_use
+
     def get_train_examples(self, data_dir):
         """See base class."""
         return self._create_examples(os.path.join(data_dir, "complete_data.tsv"), "train")
@@ -102,6 +111,13 @@ class NoDEProcessor(DataProcessor):
         """See base class."""
         return ["attack", "support"]
 
+    def get_train_test_df(self, data_dir):
+        """See base class."""
+        df = pd.read_csv(os.path.join(data_dir, "complete_data.tsv"), sep='\t')
+        train = df.loc[df['org_dataset'].isin(['debate_train', 'procon'])]
+        test = df.loc[df['org_dataset'].isin(['debate_test'])]
+        return train, test
+
     def _create_examples(self, filename, set_type):
         """Creates examples for the training and test sets."""
         df = pd.read_csv(filename, sep='\t')
@@ -112,17 +128,31 @@ class NoDEProcessor(DataProcessor):
         elif set_type == "both":
             dataset = df.loc[df['org_dataset'].isin(['debate_train', 'debate_test', 'procon'])]
         else:
-            sys.exit(-1)
-        return dataset.apply(lambda x: InputExample(guid=None, text_a=x["org"], text_b=x["response"], label=x["label"]), axis=1)
+            raise ValueError("Invalid set_type, has to be one of train, test or both.")
+        if self.input_to_use == "both":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["org"], text_b=x["response"], label=x["label"]),
+                axis=1)
+        elif self.input_to_use == "org":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["org"], text_b=None, label=x["label"]),
+                axis=1)
+        elif self.input_to_use == "response":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["response"], text_b=None, label=x["label"]),
+                axis=1)
+        else:
+            raise ValueError("Invalid input_to_use, has to be one of both, org or response.")
 
 
 class PoliticalProcessor(DataProcessor):
     """Processor for the Political data set."""
 
-    def __init__(self, task):
-        """Sets the task for the Political dataset."""
+    def __init__(self, task, input_to_use):
+        """Sets the task and mode for the Political dataset."""
         super().__init__()
         self.task = task
+        self.input_to_use = input_to_use
 
     def get_train_examples(self, data_dir):
         """See base class."""
@@ -145,7 +175,18 @@ class PoliticalProcessor(DataProcessor):
         elif self.task == "ASU":
             return ["attack", "support", "unrelated"]
         else:
-            sys.exit(-1)
+            raise ValueError("Invalid task, has to be one of AS, RU or ASU.")
+
+    def get_train_test_df(self, data_dir):
+        """See base class."""
+        df = pd.read_csv(os.path.join(data_dir, "complete_data.tsv"), sep='\t')
+        df = df.loc[df['org_dataset'].isin(['political'])]
+        if self.task == "AS":
+            df = df[df['label'] != 'unrelated']
+        elif self.task == "RU":
+            df = df.replace({'label': {'attack': 'related', 'support': 'related'}})
+        train, test = train_test_split(df, test_size=0.2, random_state=113, stratify=df['label'])
+        return train, test
 
     def _create_examples(self, filename, set_type):
         """Creates examples for the training and test sets."""
@@ -163,13 +204,30 @@ class PoliticalProcessor(DataProcessor):
         elif set_type == "both":
             dataset = df
         else:
-            sys.exit(-1)
-        return dataset.apply(lambda x: InputExample(guid=None, text_a=x["org"], text_b=x["response"], label=x["label"]),
+            raise ValueError("Invalid set_type, has to be one of train, test or both.")
+        if self.input_to_use == "both":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["org"], text_b=x["response"], label=x["label"]),
                              axis=1)
+        elif self.input_to_use == "org":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["org"], text_b=None, label=x["label"]),
+                axis=1)
+        elif self.input_to_use == "response":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["response"], text_b=None, label=x["label"]),
+                axis=1)
+        else:
+            raise ValueError("Invalid input_to_use, has to be one of both, org or response.")
 
 
 class AgreementProcessor(DataProcessor):
     """Processor for the Agreement/Disagreement Dataset."""
+
+    def __init__(self, input_to_use):
+        """Sets the  mode for the Agreement dataset."""
+        super().__init__()
+        self.input_to_use = input_to_use
 
     def get_train_examples(self, data_dir):
         """See base class."""
@@ -187,6 +245,13 @@ class AgreementProcessor(DataProcessor):
         """See base class."""
         return ["agreement", "disagreement"]
 
+    def get_train_test_df(self, data_dir):
+        """See base class."""
+        df = pd.read_csv(os.path.join(data_dir, "complete_data.tsv"), sep='\t')
+        df = df.loc[df['org_dataset'].isin(['agreement'])]
+        train, test = train_test_split(df, test_size=0.2, random_state=113, stratify=df['label'])
+        return train, test
+
     def _create_examples(self, filename, set_type):
         """Creates examples for the training and test sets."""
         df = pd.read_csv(filename, sep='\t')
@@ -199,16 +264,28 @@ class AgreementProcessor(DataProcessor):
         elif set_type == "both":
             dataset = df
         else:
-            sys.exit(-1)
-        return dataset.apply(lambda x: InputExample(guid=None, text_a=x["org"], text_b=x["response"], label=x["label"]),
-                             axis=1)
+            raise ValueError("Invalid set_type, has to be one of train, test or both.")
+        if self.input_to_use == "both":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["org"], text_b=x["response"], label=x["label"]),
+                axis=1)
+        elif self.input_to_use == "org":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["org"], text_b=None, label=x["label"]),
+                axis=1)
+        elif self.input_to_use == "response":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["response"], text_b=None, label=x["label"]),
+                axis=1)
+        else:
+            raise ValueError("Invalid input_to_use, has to be one of both, org or response.")
 
 
 def convert_examples_to_features(examples, label_list, max_seq_length,
                                  tokenizer):
     """Loads a data file into a list of `InputBatch`s."""
 
-    label_map = {label : i for i, label in enumerate(label_list)}
+    label_map = {label: i for i, label in enumerate(label_list)}
 
     features = []
     for (ex_index, example) in enumerate(examples):
