@@ -21,12 +21,11 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 import os
-import sys
 
 import pandas as pd
 
 from functools import partial
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, StratifiedKFold
 from sklearn.metrics import f1_score, classification_report, confusion_matrix
 
 logger = logging.getLogger(__name__)
@@ -66,6 +65,10 @@ class InputFeatures(object):
 class DataProcessor(object):
     """Base class for data converters for sequence classification data sets."""
 
+    def __init__(self, input_to_use):
+        """Saves the input to use."""
+        self.input_to_use = input_to_use
+
     def get_train_examples(self, data_dir):
         """Gets a collection of `InputExample`s for the train set."""
         raise NotImplementedError()
@@ -74,7 +77,7 @@ class DataProcessor(object):
         """Gets a collection of `InputExample`s for the dev set."""
         raise NotImplementedError()
 
-    def get_all_examples(self, data_dir):
+    def get_splits(self, data_dir, splits):
         """Gets a collection of `InputExample`s for the complete data set."""
         raise NotImplementedError()
 
@@ -82,18 +85,26 @@ class DataProcessor(object):
         """Gets the list of labels for this data set."""
         raise NotImplementedError()
 
-    def get_train_test_df(self, data_dir):
-        """Gets the train and test data as a dataframe."""
-        raise NotImplementedError()
+    def create_inputs(self, dataset):
+        """Creates the Input Examples for a dataset."""
+        if self.input_to_use == "both":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["org"], text_b=x["response"], label=x["label"]),
+                axis=1), dataset
+        elif self.input_to_use == "org":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["org"], text_b=None, label=x["label"]),
+                axis=1), dataset
+        elif self.input_to_use == "response":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["response"], text_b=None, label=x["label"]),
+                axis=1), dataset
+        else:
+            raise ValueError("Invalid input_to_use, has to be one of both, org or response.")
 
 
 class NoDEProcessor(DataProcessor):
     """Processor for the NoDE data set."""
-
-    def __init__(self, input_to_use):
-        """Sets the  mode for the NoDE dataset."""
-        super().__init__()
-        self.input_to_use = input_to_use
 
     def get_train_examples(self, data_dir):
         """See base class."""
@@ -103,20 +114,22 @@ class NoDEProcessor(DataProcessor):
         """See base class."""
         return self._create_examples(os.path.join(data_dir, "complete_data.tsv"), "test")
 
-    def get_all_examples(self, data_dir):
+    def get_splits(self, data_dir, splits=2):
         """See base class."""
-        return self._create_examples(os.path.join(data_dir, "complete_data.tsv"), "both")
+        df = pd.read_csv(os.path.join(data_dir, "complete_data.tsv"), sep='\t')
+        dataset = df.loc[df['org_dataset'].isin(['debate_train', 'debate_test', 'procon'])]
+        skf = StratifiedKFold(n_splits=splits, random_state=113)
+        splits_data = []
+        for train_idx, val_idx in skf.split(dataset, dataset['label']):
+            train_examples, train_df = self.create_inputs(dataset.iloc[train_idx])
+            test_examples, test_df = self.create_inputs(dataset.iloc[val_idx])
+            splits_data.append((train_examples, train_df,
+                                test_examples, test_df))
+        return splits_data
 
     def get_labels(self):
         """See base class."""
         return ["attack", "support"]
-
-    def get_train_test_df(self, data_dir):
-        """See base class."""
-        df = pd.read_csv(os.path.join(data_dir, "complete_data.tsv"), sep='\t')
-        train = df.loc[df['org_dataset'].isin(['debate_train', 'procon'])]
-        test = df.loc[df['org_dataset'].isin(['debate_test'])]
-        return train, test
 
     def _create_examples(self, filename, set_type):
         """Creates examples for the training and test sets."""
@@ -125,24 +138,9 @@ class NoDEProcessor(DataProcessor):
             dataset = df.loc[df['org_dataset'].isin(['debate_train', 'procon'])]
         elif set_type == "test":
             dataset = df.loc[df['org_dataset'].isin(['debate_test'])]
-        elif set_type == "both":
-            dataset = df.loc[df['org_dataset'].isin(['debate_train', 'debate_test', 'procon'])]
         else:
             raise ValueError("Invalid set_type, has to be one of train, test or both.")
-        if self.input_to_use == "both":
-            return dataset.apply(
-                lambda x: InputExample(guid=None, text_a=x["org"], text_b=x["response"], label=x["label"]),
-                axis=1)
-        elif self.input_to_use == "org":
-            return dataset.apply(
-                lambda x: InputExample(guid=None, text_a=x["org"], text_b=None, label=x["label"]),
-                axis=1)
-        elif self.input_to_use == "response":
-            return dataset.apply(
-                lambda x: InputExample(guid=None, text_a=x["response"], text_b=None, label=x["label"]),
-                axis=1)
-        else:
-            raise ValueError("Invalid input_to_use, has to be one of both, org or response.")
+        return self.create_inputs(dataset)
 
 
 class PoliticalProcessor(DataProcessor):
@@ -150,9 +148,8 @@ class PoliticalProcessor(DataProcessor):
 
     def __init__(self, task, input_to_use):
         """Sets the task and mode for the Political dataset."""
-        super().__init__()
+        super().__init__(input_to_use)
         self.task = task
-        self.input_to_use = input_to_use
 
     def get_train_examples(self, data_dir):
         """See base class."""
@@ -162,9 +159,23 @@ class PoliticalProcessor(DataProcessor):
         """See base class."""
         return self._create_examples(os.path.join(data_dir, "complete_data.tsv"), "test")
 
-    def get_all_examples(self, data_dir):
+    def get_splits(self, data_dir, splits=10):
         """See base class."""
-        return self._create_examples(os.path.join(data_dir, "complete_data.tsv"), "both")
+        df = pd.read_csv(os.path.join(data_dir, "complete_data.tsv"), sep='\t')
+        df = df.loc[df['org_dataset'].isin(['political'])]
+        if self.task == "AS":
+            df = df[df['label'] != 'unrelated']
+        elif self.task == "RU":
+            df = df.replace({'label': {'attack': 'related', 'support': 'related'}})
+        dataset = df
+        skf = StratifiedKFold(n_splits=splits, random_state=113)
+        splits_data = []
+        for train_idx, val_idx in skf.split(dataset, dataset['label']):
+            train_examples, train_df = self.create_inputs(dataset.iloc[train_idx])
+            test_examples, test_df = self.create_inputs(dataset.iloc[val_idx])
+            splits_data.append((train_examples, train_df,
+                                test_examples, test_df))
+        return splits_data
 
     def get_labels(self):
         """See base class."""
@@ -177,17 +188,6 @@ class PoliticalProcessor(DataProcessor):
         else:
             raise ValueError("Invalid task, has to be one of AS, RU or ASU.")
 
-    def get_train_test_df(self, data_dir):
-        """See base class."""
-        df = pd.read_csv(os.path.join(data_dir, "complete_data.tsv"), sep='\t')
-        df = df.loc[df['org_dataset'].isin(['political'])]
-        if self.task == "AS":
-            df = df[df['label'] != 'unrelated']
-        elif self.task == "RU":
-            df = df.replace({'label': {'attack': 'related', 'support': 'related'}})
-        train, test = train_test_split(df, test_size=0.2, random_state=113, stratify=df['label'])
-        return train, test
-
     def _create_examples(self, filename, set_type):
         """Creates examples for the training and test sets."""
         df = pd.read_csv(filename, sep='\t')
@@ -201,33 +201,13 @@ class PoliticalProcessor(DataProcessor):
             dataset = train
         elif set_type == "test":
             dataset = test
-        elif set_type == "both":
-            dataset = df
         else:
             raise ValueError("Invalid set_type, has to be one of train, test or both.")
-        if self.input_to_use == "both":
-            return dataset.apply(
-                lambda x: InputExample(guid=None, text_a=x["org"], text_b=x["response"], label=x["label"]),
-                             axis=1)
-        elif self.input_to_use == "org":
-            return dataset.apply(
-                lambda x: InputExample(guid=None, text_a=x["org"], text_b=None, label=x["label"]),
-                axis=1)
-        elif self.input_to_use == "response":
-            return dataset.apply(
-                lambda x: InputExample(guid=None, text_a=x["response"], text_b=None, label=x["label"]),
-                axis=1)
-        else:
-            raise ValueError("Invalid input_to_use, has to be one of both, org or response.")
+        return self.create_inputs(dataset)
 
 
 class AgreementProcessor(DataProcessor):
     """Processor for the Agreement/Disagreement Dataset."""
-
-    def __init__(self, input_to_use):
-        """Sets the  mode for the Agreement dataset."""
-        super().__init__()
-        self.input_to_use = input_to_use
 
     def get_train_examples(self, data_dir):
         """See base class."""
@@ -237,20 +217,22 @@ class AgreementProcessor(DataProcessor):
         """See base class."""
         return self._create_examples(os.path.join(data_dir, "complete_data.tsv"), "test")
 
-    def get_all_examples(self, data_dir):
+    def get_splits(self, data_dir, splits=10):
         """See base class."""
-        return self._create_examples(os.path.join(data_dir, "complete_data.tsv"), "both")
+        df = pd.read_csv(os.path.join(data_dir, "complete_data.tsv"), sep='\t')
+        dataset = df.loc[df['org_dataset'].isin(['agreement'])]
+        skf = StratifiedKFold(n_splits=splits, random_state=113)
+        splits_data = []
+        for train_idx, val_idx in skf.split(dataset, dataset['label']):
+            train_examples, train_df = self.create_inputs(dataset.iloc[train_idx])
+            test_examples, test_df = self.create_inputs(dataset.iloc[val_idx])
+            splits_data.append((train_examples, train_df,
+                                test_examples, test_df))
+        return splits_data
 
     def get_labels(self):
         """See base class."""
         return ["agreement", "disagreement"]
-
-    def get_train_test_df(self, data_dir):
-        """See base class."""
-        df = pd.read_csv(os.path.join(data_dir, "complete_data.tsv"), sep='\t')
-        df = df.loc[df['org_dataset'].isin(['agreement'])]
-        train, test = train_test_split(df, test_size=0.2, random_state=113, stratify=df['label'])
-        return train, test
 
     def _create_examples(self, filename, set_type):
         """Creates examples for the training and test sets."""
@@ -261,24 +243,9 @@ class AgreementProcessor(DataProcessor):
             dataset = train
         elif set_type == "test":
             dataset = test
-        elif set_type == "both":
-            dataset = df
         else:
             raise ValueError("Invalid set_type, has to be one of train, test or both.")
-        if self.input_to_use == "both":
-            return dataset.apply(
-                lambda x: InputExample(guid=None, text_a=x["org"], text_b=x["response"], label=x["label"]),
-                axis=1)
-        elif self.input_to_use == "org":
-            return dataset.apply(
-                lambda x: InputExample(guid=None, text_a=x["org"], text_b=None, label=x["label"]),
-                axis=1)
-        elif self.input_to_use == "response":
-            return dataset.apply(
-                lambda x: InputExample(guid=None, text_a=x["response"], text_b=None, label=x["label"]),
-                axis=1)
-        else:
-            raise ValueError("Invalid input_to_use, has to be one of both, org or response.")
+        return self.create_inputs(dataset)
 
 
 def convert_examples_to_features(examples, label_list, max_seq_length,

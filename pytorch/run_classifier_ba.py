@@ -26,6 +26,7 @@ import random
 from tqdm import tqdm, trange
 
 import numpy as np
+import pandas as pd
 
 import torch
 from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
@@ -33,6 +34,8 @@ from torch.utils.data import (DataLoader, RandomSampler, SequentialSampler,
 from torch.nn import CrossEntropyLoss
 
 from tensorboardX import SummaryWriter
+
+from sklearn.model_selection import StratifiedKFold
 
 from pytorch_pretrained_bert.file_utils import WEIGHTS_NAME, CONFIG_NAME
 from pytorch_pretrained_bert.modeling import BertForSequenceClassification
@@ -189,18 +192,16 @@ def main():
         """Returns the features and examples of train or test mode."""
         # Prepare data loader
         if mode == "train":
-            examples = processor.get_train_examples(args.data_dir)
+            examples, df = processor.get_train_examples(args.data_dir)
         elif mode == "dev":
-            examples = processor.get_dev_examples(args.data_dir)
-        elif mode == "both":
-            examples = processor.get_all_examples(args.data_dir)
+            examples, df = processor.get_dev_examples(args.data_dir)
         else:
             raise ValueError("Invalid feature mode.")
 
-        cached_features_file = os.path.join(args.data_dir, '{0}_{1}_{2}_{3}'.format(mode,
+        cached_features_file = os.path.join(args.data_dir, '{0}_{1}_{2}_{3}_{4}'.format(mode,
             list(filter(None, args.bert_model.split('/'))).pop(),
                         str(args.max_seq_length),
-                        str(task_name)))
+                        str(task_name), str(args.input_to_use)))
         try:
             with open(cached_features_file, "rb") as reader:
                 features = pickle.load(reader)
@@ -208,11 +209,11 @@ def main():
             features = convert_examples_to_features(
                 examples, label_list, args.max_seq_length, tokenizer)
 
-            logger.info("  Saving %s features into cached file %s", (mode, cached_features_file))
+            logger.info('Saving {0} features into cached file {1}'.format(mode, cached_features_file))
             with open(cached_features_file, "wb") as writer:
                 pickle.dump(features, writer)
 
-        return features, examples
+        return features, examples, df
 
     def do_training(train_features, train_examples):
         """Runs BERT fine-tuning."""
@@ -360,7 +361,7 @@ def main():
         result['global_step'] = global_step
         result['loss'] = loss
 
-        return result
+        return result, preds
 
     def save_results(result_dict):
         """Saves the results."""
@@ -378,15 +379,46 @@ def main():
 
     # Training
     if args.do_train:
-        features, examples = get_features_examples("train")
+        features, examples, df = get_features_examples("train")
         do_training(features, examples)
         do_save()
 
     # Evaluation
     if args.do_eval:
-        features, examples = get_features_examples("dev")
-        result = do_eval(features, examples)
+        features, examples, df = get_features_examples("dev")
+        result, preds = do_eval(features, examples)
+        # print(preds)
+        # df['predictions'] = preds
+        # df['correctness'] = df.apply(lambda r: 1 if r['label'] == r['predictions'] else 0, axis=1)
+        # rels = pd.crosstab(df['topic'], [df['label'], df['predictions']], margins=True,
+        #                    colnames=['label', 'prediction'])
+        # rels2 = pd.crosstab(df['topic'], df['correctness'], normalize='index')
+        # print(rels)
+        # print(rels2)
         save_results(result)
+
+    # CrossVal
+    args.do_cross_val = True
+    if args.do_cross_val:
+        results = []
+        data = processor.get_splits(args.data_dir)
+        for (train_examples, train_df, test_examples, test_df) in data:
+            # Reset model
+            model = BertForSequenceClassification.from_pretrained(args.bert_model, num_labels=num_labels)
+            model.to(device)
+            # Create features
+            train_features = convert_examples_to_features(
+                train_examples, label_list, args.max_seq_length, tokenizer)
+            test_features = convert_examples_to_features(
+                test_examples, label_list, args.max_seq_length, tokenizer)
+            do_training(train_features, train_examples)
+            result, preds = do_eval(test_features, test_examples)
+            save_results(result)
+            results.append(result)
+
+        result_df = pd.DataFrame(results)
+        print(result_df.agg([np.mean, np.max, np.min]))
+
 
 if __name__ == "__main__":
     main()
