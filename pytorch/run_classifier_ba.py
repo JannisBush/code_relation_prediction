@@ -57,7 +57,7 @@ def main():
     """Fine-tune BERT for a given task with given parameters."""
 
     # Define all parameters, using argparse/Command Line Interface
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     def add_args():
         """Add all possible options and defaults to the parser."""
@@ -412,12 +412,20 @@ def main():
                     if not key.startswith("_"):
                         logger.info("  %s = %s", key, str(result_dict[key]))
                         writer.write("%s = %s\n" % (key, str(result_dict[key])))
-        output_csv_file = os.path.join(args.output_dir, "eval_results.csv")
-        output_preds_file = os.path.join(args.output_dir, "eval_preds.csv")
+
+        output_csv_file = os.path.join(args.output_dir, "../eval_results.csv")
+        output_preds_file = os.path.join(args.output_dir, "../eval_preds.csv")
         df_res = pd.DataFrame(result_list)
         df_preds = pd.DataFrame(pred_list)
-        df_res.to_csv(output_csv_file, encoding='utf-8', sep='\t', index=False)
-        df_preds.to_csv(output_preds_file, encoding='utf-8', index=False)
+        df_preds['run'] = '{0}_{1}_{2}_{3}'.format(
+            args.bert_model, args.num_train_epochs, args.train_batch_size, args.learning_rate)
+        if not os.path.exists(output_csv_file):
+            df_res.to_csv(output_csv_file, encoding='utf-8', sep='\t', index=False)
+            df_preds.to_csv(output_preds_file, encoding='utf-8', index=False)
+        else:
+            df_res.to_csv(output_csv_file, mode='a', encoding='utf-8', sep='\t', index=False, header=False)
+            df_preds.to_csv(output_preds_file, mode='a', encoding='utf-8', index=False, header=False)
+
 
     # Load the tokenizer and the model
     tokenizer = BertTokenizer.from_pretrained(args.bert_model, do_lower_case=args.do_lower_case)
