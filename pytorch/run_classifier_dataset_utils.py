@@ -358,17 +358,12 @@ def simple_accuracy(preds, labels):
 
 
 def acc_and_f1(preds, labels):
-    """Returns the accuracy and the f1 score of the prediction."""
+    """Returns the accuracy and the weighted f1 score of the prediction."""
     acc = simple_accuracy(preds, labels)
     f1 = f1_score(y_true=labels, y_pred=preds, average='weighted')
-    class_rep = classification_report(y_true=labels, y_pred=preds, output_dict=True)
-    conf_mat = confusion_matrix(y_true=labels, y_pred=preds)
     return {
         "acc": acc,
         "f1": f1,
-        "acc_and_f1": (acc + f1) / 2,
-        "classification_report": class_rep,
-        "confusion_matrix": conf_mat
     }
 
 
@@ -378,7 +373,7 @@ def compute_metrics(task_name, preds, labels):
     if task_name == "node":
         return {"acc": simple_accuracy(preds, labels)}
     elif task_name in ["political-as", "political-ru", "political-asu", "agreement"]:
-        return {"acc_and_f1": acc_and_f1(preds, labels)}
+        return acc_and_f1(preds, labels)
     else:
         raise KeyError(task_name)
 

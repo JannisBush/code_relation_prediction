@@ -100,6 +100,15 @@ def main():
         parser.add_argument("--do_eval",
                             action='store_true',
                             help="Whether to run eval on the dev set.")
+        parser.add_argument("--do_cross_val",
+                            action='store_true',
+                            help="Whether to run cross-validation.")
+        parser.add_argument("--do_save",
+                            action='store_true',
+                            help="Whether to save the resulting model.")
+        parser.add_argument("--do_visualization",
+                            action='store_true',
+                            help="Whether to run visualization.")
         parser.add_argument("--do_lower_case",
                             action='store_true',
                             help="Set this flag if you are using an uncased model.")
@@ -166,8 +175,8 @@ def main():
         device, n_gpu))
 
     # Fail if the arguments are invalid
-    if not args.do_train and not args.do_eval:
-        raise ValueError("At least one of `do_train` or `do_eval` must be True.")
+    if not args.do_train and not args.do_eval and not args.do_cross_val and not args.do_visualization:
+        raise ValueError("At least one of `do_train`, `do_eval` `do_cross_val` or `do_visualization` must be True.")
     if os.path.exists(args.output_dir) and os.listdir(
             args.output_dir) and args.do_train and not args.overwrite_output_dir:
         raise ValueError("Output directory ({}) already exists and is not empty. "
@@ -190,30 +199,47 @@ def main():
 
     def get_features_examples(mode):
         """Returns the features and examples of train or test mode."""
+
+        def convert(split, modus, exs):
+            """Converts the examples or load them from cache."""
+            cached_features_file = os.path.join(args.data_dir, '{0}_{1}_{2}_{3}_{4}_{5}'.format(split, modus,
+                list(filter(None, args.bert_model.split('/'))).pop(),
+                            str(args.max_seq_length),
+                            str(task_name), str(args.input_to_use)))
+            try:
+                with open(cached_features_file, "rb") as reader:
+                    fs = pickle.load(reader)
+            except:
+                fs = convert_examples_to_features(
+                    exs, label_list, args.max_seq_length, tokenizer)
+
+                logger.info('Saving {0} features into cached file {1}'.format(mode, cached_features_file))
+                with open(cached_features_file, "wb") as writer:
+                    pickle.dump(fs, writer)
+
+            return fs
+
         # Prepare data loader
         if mode == "train":
-            examples, df = processor.get_train_examples(args.data_dir)
+            train_ex, df = processor.get_train_examples(args.data_dir)
+            return convert("X", mode, train_ex), train_ex, df
         elif mode == "dev":
-            examples, df = processor.get_dev_examples(args.data_dir)
+            dev_ex, df = processor.get_dev_examples(args.data_dir)
+            return convert("X", mode, dev_ex), dev_ex, df
+        elif mode == "cross_val":
+            data = processor.get_splits(args.data_dir)
+            train_f_list, train_e_list, train_df_list, test_f_list, test_e_list, test_df_list = ([] for _ in range(6))
+            for i, (train_ex, train_df, test_ex, test_df) in enumerate(data):
+                train_e_list.append(train_ex)
+                train_df_list.append(train_df)
+                test_e_list.append(test_ex)
+                test_df_list.append(test_df)
+                # Create features
+                train_f_list.append(convert(i, "train", train_ex))
+                test_f_list.append(convert(i, "dev", test_ex))
+            return train_f_list, train_e_list, train_df_list, test_f_list, test_e_list, test_df_list
         else:
             raise ValueError("Invalid feature mode.")
-
-        cached_features_file = os.path.join(args.data_dir, '{0}_{1}_{2}_{3}_{4}'.format(mode,
-            list(filter(None, args.bert_model.split('/'))).pop(),
-                        str(args.max_seq_length),
-                        str(task_name), str(args.input_to_use)))
-        try:
-            with open(cached_features_file, "rb") as reader:
-                features = pickle.load(reader)
-        except:
-            features = convert_examples_to_features(
-                examples, label_list, args.max_seq_length, tokenizer)
-
-            logger.info('Saving {0} features into cached file {1}'.format(mode, cached_features_file))
-            with open(cached_features_file, "wb") as writer:
-                pickle.dump(features, writer)
-
-        return features, examples, df
 
     def do_training(train_features, train_examples):
         """Runs BERT fine-tuning."""
@@ -360,17 +386,38 @@ def main():
         result['eval_loss'] = eval_loss
         result['global_step'] = global_step
         result['loss'] = loss
+        # Save all settings for external evaluation
+        result['_task'] = task_name
+        result['_input_mode'] = args.input_to_use
+        result['_learning_rate'] = args.learning_rate
+        result['_bert-model'] = args.bert_model
+        result['_batch_size'] = args.train_batch_size
+        result['_warmup'] = args.warmup_proportion
+        result['_num_epochs'] = args.num_train_epochs
+        result['_seq_len'] = args.max_seq_length
+        result['_seed'] = args.seed
+        result['_gradient_acc'] = args.gradient_accumulation_steps
 
         return result, preds
 
-    def save_results(result_dict):
+    def save_results(result_list, pred_list):
         """Saves the results."""
         output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
         with open(output_eval_file, "w") as writer:
             logger.info("***** Eval results *****")
-            for key in sorted(result_dict.keys()):
-                logger.info("  %s = %s", key, str(result_dict[key]))
-                writer.write("%s = %s\n" % (key, str(result_dict[key])))
+            for i, result_dict in enumerate(result_list):
+                logger.info("Run %i", i)
+                writer.write("Run %i\n" % i)
+                for key in sorted(result_dict.keys()):
+                    if not key.startswith("_"):
+                        logger.info("  %s = %s", key, str(result_dict[key]))
+                        writer.write("%s = %s\n" % (key, str(result_dict[key])))
+        output_csv_file = os.path.join(args.output_dir, "eval_results.csv")
+        output_preds_file = os.path.join(args.output_dir, "eval_preds.csv")
+        df_res = pd.DataFrame(result_list)
+        df_preds = pd.DataFrame(pred_list)
+        df_res.to_csv(output_csv_file, encoding='utf-8', sep='\t', index=False)
+        df_preds.to_csv(output_preds_file, encoding='utf-8', index=False)
 
     # Load the tokenizer and the model
     tokenizer = BertTokenizer.from_pretrained(args.bert_model, do_lower_case=args.do_lower_case)
@@ -381,12 +428,15 @@ def main():
     if args.do_train:
         features, examples, df = get_features_examples("train")
         do_training(features, examples)
-        do_save()
+        if args.do_save:
+            do_save()
 
     # Evaluation
     if args.do_eval:
         features, examples, df = get_features_examples("dev")
         result, preds = do_eval(features, examples)
+        # Analyze results, somewhere else,
+        # the corresponding test_dfs can be loaded using get_features_examples("dev")
         # print(preds)
         # df['predictions'] = preds
         # df['correctness'] = df.apply(lambda r: 1 if r['label'] == r['predictions'] else 0, axis=1)
@@ -395,29 +445,55 @@ def main():
         # rels2 = pd.crosstab(df['topic'], df['correctness'], normalize='index')
         # print(rels)
         # print(rels2)
-        save_results(result)
+        save_results([result], [preds])
 
     # CrossVal
-    args.do_cross_val = True
     if args.do_cross_val:
         results = []
-        data = processor.get_splits(args.data_dir)
-        for (train_examples, train_df, test_examples, test_df) in data:
+        predictions = []
+        train_f_l, train_e_l, train_df_l, test_f_l, test_e_l, test_df_l = get_features_examples("cross_val")
+        for train_features, train_examples, test_features, test_examples in zip(
+                train_f_l, train_e_l, test_f_l, test_e_l):
             # Reset model
             model = BertForSequenceClassification.from_pretrained(args.bert_model, num_labels=num_labels)
             model.to(device)
-            # Create features
-            train_features = convert_examples_to_features(
-                train_examples, label_list, args.max_seq_length, tokenizer)
-            test_features = convert_examples_to_features(
-                test_examples, label_list, args.max_seq_length, tokenizer)
+            # Train
             do_training(train_features, train_examples)
+            # Eval
             result, preds = do_eval(test_features, test_examples)
-            save_results(result)
             results.append(result)
+            predictions.append(preds)
 
-        result_df = pd.DataFrame(results)
-        print(result_df.agg([np.mean, np.max, np.min]))
+        # Analyze results, somewhere else,
+        # the corresponding test_dfs can be loaded using get_features_examples("cross_val")
+        #result_df = pd.DataFrame(results)
+        #print(result_df.agg([np.mean, np.max, np.min]))
+
+        save_results(results, predictions)
+
+    # Visualization
+    if args.do_visualization:
+        from skorch import NeuralNetClassifier
+        visu_features, _, _ = get_features_examples("dev")
+
+        all_input_ids = torch.tensor([f.input_ids for f in visu_features], dtype=torch.long)
+        all_input_mask = torch.tensor([f.input_mask for f in visu_features], dtype=torch.long)
+        all_segment_ids = torch.tensor([f.segment_ids for f in visu_features], dtype=torch.long)
+        all_label_ids = torch.tensor([f.label_id for f in visu_features], dtype=torch.long)
+
+        class MyModule(torch.nn.Module):
+            def __init__(self):
+                super(MyModule, self).__init__()
+                self.model = model
+
+            def forward(self, X):
+                return self.model(*X)
+
+        net = NeuralNetClassifier(MyModule, max_epochs=0, lr=0.0, device='cuda')
+        net.fit([all_input_ids, all_segment_ids, all_input_mask], y=all_label_ids)
+        y_proba = net.predict_proba([all_input_ids, all_segment_ids, all_input_mask])
+        print(preds)
+        print(net.predict([all_input_ids, all_segment_ids, all_input_mask]))
 
 
 if __name__ == "__main__":
