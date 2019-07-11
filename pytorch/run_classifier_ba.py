@@ -202,10 +202,10 @@ def main():
 
         def convert(split, modus, exs):
             """Converts the examples or load them from cache."""
-            cached_features_file = os.path.join(args.data_dir, '{0}_{1}_{2}_{3}_{4}_{5}'.format(split, modus,
+            cached_features_file = os.path.join(args.data_dir, '{0}_{1}_{2}_{3}_{4}_{5}'.format(modus,
                 list(filter(None, args.bert_model.split('/'))).pop(),
                             str(args.max_seq_length),
-                            str(task_name), str(args.input_to_use)))
+                            str(task_name), str(args.input_to_use), split))
             try:
                 with open(cached_features_file, "rb") as reader:
                     fs = pickle.load(reader)
@@ -474,12 +474,29 @@ def main():
     # Visualization
     if args.do_visualization:
         from skorch import NeuralNetClassifier
-        visu_features, _, _ = get_features_examples("dev")
+        from sklearn.pipeline import make_pipeline
+        from run_classifier_dataset_utils import InputExample
 
-        all_input_ids = torch.tensor([f.input_ids for f in visu_features], dtype=torch.long)
-        all_input_mask = torch.tensor([f.input_mask for f in visu_features], dtype=torch.long)
-        all_segment_ids = torch.tensor([f.segment_ids for f in visu_features], dtype=torch.long)
-        all_label_ids = torch.tensor([f.label_id for f in visu_features], dtype=torch.long)
+        raw_text = "But Mr. Nixon did n't say a word that was ever publicly recorded . Even more incredible , he did n't say a word when the Communists took power in Cuba - not 4 miles off their shores , but only 90 miles off our shores . Mr. Nixon saw what was happening in Cuba ."
+        raw_text = "I love hate internet access You have no choice"
+        raw_text_list = [raw_text]
+
+        class BertConverter():
+
+            def transform(self, X, y=None, **fit_params):
+                exs = []
+                for text in X:
+                    exs.append(InputExample(guid=None, text_a=text, text_b=None, label="attack"))
+                visu_features = convert_examples_to_features(exs, label_list, args.max_seq_length, tokenizer)
+                all_input_ids = torch.tensor([f.input_ids for f in visu_features], dtype=torch.long)
+                all_input_mask = torch.tensor([f.input_mask for f in visu_features], dtype=torch.long)
+                all_segment_ids = torch.tensor([f.segment_ids for f in visu_features], dtype=torch.long)
+                all_label_ids = torch.tensor([f.label_id for f in visu_features], dtype=torch.long)
+                #print(all_label_ids)
+                return [all_input_ids, all_segment_ids, all_input_mask]
+
+            def fit(self, X, y=None, **fit_params):
+                return self
 
         class MyModule(torch.nn.Module):
             def __init__(self):
@@ -487,13 +504,46 @@ def main():
                 self.model = model
 
             def forward(self, X):
-                return self.model(*X)
+                return torch.nn.functional.softmax(self.model(*X), dim=1)
 
-        net = NeuralNetClassifier(MyModule, max_epochs=0, lr=0.0, device='cuda')
-        net.fit([all_input_ids, all_segment_ids, all_input_mask], y=all_label_ids)
-        y_proba = net.predict_proba([all_input_ids, all_segment_ids, all_input_mask])
-        print(preds)
-        print(net.predict([all_input_ids, all_segment_ids, all_input_mask]))
+        net = NeuralNetClassifier(MyModule, max_epochs=0, lr=0.0, device='cuda', train_split=None)
+
+        c = make_pipeline(BertConverter(), net)
+        c.fit(raw_text_list, y=torch.tensor([0], dtype=torch.long))
+
+        print(c.predict_proba(raw_text_list))
+        from lime.lime_text import LimeTextExplainer
+        # bow=True to replace all occurences of a string at once
+        explainer = LimeTextExplainer(class_names=processor.get_labels(), bow=False, mask_string="[UNK]")  # , split_expression=tokenizer.tokenize)
+
+        idx = 0
+        exp = explainer.explain_instance(raw_text_list[idx], c.predict_proba)
+        print('Document id: %d' % idx)
+        print('Probability(support) =', c.predict_proba([raw_text_list[idx]])[0, 1])
+        print('True class: %s' % "None")
+
+        print(exp.as_list())
+        exp.save_to_file('oi.html')
+
+        from anchor import anchor_text
+        import spacy
+        nlp = spacy.load("en_core_web_sm")
+        explainer2 = anchor_text.AnchorText(nlp, processor.get_labels(), use_unk_distribution=True)
+        exp2 = explainer2.explain_instance(raw_text_list[idx], c.predict, threshold=0.95, use_proba=True)
+        pred = explainer2.class_names[c.predict([raw_text_list[idx]])[0]]
+        alternative = explainer2.class_names[1 - c.predict([raw_text_list[idx]])[0]]
+        print('Anchor: %s' % (' AND '.join(exp2.names())))
+        print('Precision: %.2f' % exp2.precision())
+        print()
+        print('Examples where anchor applies and model predicts %s:' % pred)
+        print()
+        print('\n'.join([x[0] for x in exp2.examples(only_same_prediction=True)]))
+        print()
+        print('Examples where anchor applies and model predicts %s:' % alternative)
+        print()
+        print('\n'.join([x[0] for x in exp2.examples(only_different_prediction=True)]))
+
+        exp2.save_to_file('oi2.html')
 
 
 if __name__ == "__main__":
