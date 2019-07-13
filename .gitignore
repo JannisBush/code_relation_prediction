@@ -5,3 +5,5 @@ bert/*/
 */__pycache__/
 pytorch/*/
 data/*bert*
+*.ipynb_checkpoints/
+data/
