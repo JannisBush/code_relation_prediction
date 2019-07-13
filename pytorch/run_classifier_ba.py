@@ -413,7 +413,7 @@ def main():
                         logger.info("  %s = %s", key, str(result_dict[key]))
                         writer.write("%s = %s\n" % (key, str(result_dict[key])))
 
-        output_csv_file = os.path.join(args.output_dir, "../eval_results.csv")
+        output_csv_file = os.path.join(args.output_dir, "../eval_results.tsv")
         output_preds_file = os.path.join(args.output_dir, "../eval_preds.csv")
         df_res = pd.DataFrame(result_list)
         df_preds = pd.DataFrame(pred_list)
