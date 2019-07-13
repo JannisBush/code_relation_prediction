@@ -485,9 +485,15 @@ def main():
         from sklearn.pipeline import make_pipeline
         from run_classifier_dataset_utils import InputExample
 
-        raw_text = "But Mr. Nixon did n't say a word that was ever publicly recorded . Even more incredible , he did n't say a word when the Communists took power in Cuba - not 4 miles off their shores , but only 90 miles off our shores . Mr. Nixon saw what was happening in Cuba ."
-        raw_text = "I love hate internet access You have no choice"
-        raw_text_list = [raw_text]
+        raw_text_1 = "But Mr. Nixon did n't say a word that was ever publicly recorded . Even more incredible , " \
+                     "he did n't say a word when the Communists took power in Cuba - not 4 miles off their shores , " \
+                     "but only 90 miles off our shores . Mr. Nixon saw what was happening in Cuba ."
+        raw_text_2 = "Cordoba House is no act of tolerance, but of excess/arrogance. Building this structure on the " \
+                     "edge of the battlefield created by radical Islamists is not a celebration of " \
+                     "religious pluralism and mutual tolerance; it is a political statement of shocking arrogance " \
+                     "and hypocrisy."
+        raw_text_3 = "Are not right no does he alcohol child china play"
+        raw_text_list = [raw_text_1, raw_text_2, raw_text_3]
 
         class BertConverter():
 
@@ -517,7 +523,7 @@ def main():
         net = NeuralNetClassifier(MyModule, max_epochs=0, lr=0.0, device='cuda', train_split=None)
 
         c = make_pipeline(BertConverter(), net)
-        c.fit(raw_text_list, y=torch.tensor([0], dtype=torch.long))
+        c.fit(raw_text_list, y=torch.zeros(len(raw_text_list), dtype=torch.long))
 
         print(c.predict_proba(raw_text_list))
         from lime.lime_text import LimeTextExplainer
@@ -531,7 +537,7 @@ def main():
         print('True class: %s' % "None")
 
         print(exp.as_list())
-        exp.save_to_file('oi.html')
+        exp.save_to_file(os.path.join(args.output_dir, "lime.html"))
 
         from anchor import anchor_text
         import spacy
@@ -551,7 +557,7 @@ def main():
         print()
         print('\n'.join([x[0] for x in exp2.examples(only_different_prediction=True)]))
 
-        exp2.save_to_file('oi2.html')
+        exp2.save_to_file(os.path.join(args.output_dir, "anchor.html"))
 
 
 if __name__ == "__main__":

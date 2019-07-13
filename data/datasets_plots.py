@@ -8,8 +8,8 @@ import spacy
 
 if __name__ == '__main__':
     df = pd.read_csv('./complete_data.tsv', sep='\t')
-    data_stats_org = np.load('./stats/data_stats_org.npy').item()
-    data_stats_resp = np.load('./stats/data_stats_resp.npy').item()
+    data_stats_org = np.load('./stats/data_stats_org.npy', allow_pickle=True).item()
+    data_stats_resp = np.load('./stats/data_stats_resp.npy', allow_pickle=True).item()
     data_nix_ken = pd.read_csv('./stats/data_nix_ken.tsv', sep='\t')
 
     # Plot distribution of length of org, resp and combined over the different datasets

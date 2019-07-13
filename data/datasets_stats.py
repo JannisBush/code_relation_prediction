@@ -1,3 +1,4 @@
+import os
 import numpy as np
 import pandas as pd
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
@@ -117,8 +118,9 @@ if __name__ == '__main__':
     data_stats_total = df.groupby('org_dataset').apply(
         lambda r: pd.Series(
             {'dataset': r['org_dataset'].iloc[0], 'args': count_args(r),
-             'tot': count_values(r, ['attack', 'support', 'unrelated']),
-             'no': count_values(r, ["attack"]), 'yes': count_values(r, ["support"]),
+             'tot': count_values(r, ['attack', 'support', 'unrelated', 'agreement', 'disagreement']),
+             'attack/disagreement': count_values(r, ["attack", "disagreement"]),
+             'support/agreement': count_values(r, ["support", "agreement"]),
              'unrelated': count_values(r, ['unrelated']),
              'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(),
              'max_total_len': r['complete_len'].max()}))
@@ -171,6 +173,10 @@ if __name__ == '__main__':
     # Or using Scattertext
 
     # Save all dataframes
+    if not os.path.exists('stats'):
+        os.makedirs('stats')
+    if not os.path.exists('plots'):
+        os.makedirs('plots')
     data_stats_author.to_csv('./stats/data_stats_author.tsv', encoding='utf-8', sep='\t', index=False)
     data_nix_ken.to_csv('./stats/data_nix_ken.tsv', encoding='utf-8', sep='\t', index=False)
     data_stats_total.to_csv('./stats/data_stats_total.tsv', encoding='utf-8', sep='\t', index=False)
