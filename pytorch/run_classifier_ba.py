@@ -403,7 +403,7 @@ def main():
     def save_results(result_list, pred_list):
         """Saves the results."""
         output_eval_file = os.path.join(args.output_dir, "eval_results.txt")
-        with open(output_eval_file, "w") as writer:
+        with open(output_eval_file, "a") as writer:
             logger.info("***** Eval results *****")
             for i, result_dict in enumerate(result_list):
                 logger.info("Run %i", i)
@@ -471,13 +471,14 @@ def main():
             result, preds = do_eval(test_features, test_examples)
             results.append(result)
             predictions.append(preds)
+            save_results([result], [preds])
 
         # Analyze results, somewhere else,
         # the corresponding test_dfs can be loaded using get_features_examples("cross_val")
         #result_df = pd.DataFrame(results)
         #print(result_df.agg([np.mean, np.max, np.min]))
 
-        save_results(results, predictions)
+        #save_results(results, predictions)
 
     # Visualization
     if args.do_visualization:
