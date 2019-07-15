@@ -3,7 +3,9 @@ import copy
 import xml.etree.ElementTree as ET
 import pandas as pd
 import numpy as np
-from bert import tokenization
+#from bert import tokenization
+from pytorch_pretrained_bert.tokenization import BertTokenizer
+
 import matplotlib.pyplot as plt
 from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
 import scattertext as st
@@ -230,9 +232,12 @@ if __name__ == '__main__':
     BERT_INIT_CHKPNT = '../bert/uncased_L-12_H-768_A-12/bert_model.ckpt'
 
     # Create tokenizer
-    tokenization.validate_case_matches_checkpoint(True, BERT_INIT_CHKPNT)
-    tokenizer = tokenization.FullTokenizer(
-        vocab_file=BERT_VOCAB, do_lower_case=True)
+    #tokenization.validate_case_matches_checkpoint(True, BERT_INIT_CHKPNT)
+    #tokenizer = tokenization.FullTokenizer(
+    #    vocab_file=BERT_VOCAB, do_lower_case=True)
+
+    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased', do_lower_case=True)
+
 
     # Count length in WordPiece tokens
     # How many tokens (wordpiece tokenizer in org and response)
@@ -385,10 +390,10 @@ if __name__ == '__main__':
 
     # Repair debate_test + debate_train (internetaccess -> train, groundzero -> test)
     # Still not the same as described in paper/website (internetaccess 2 missing, military service 2 too much)
-    df_complete.loc[(df_complete['topic'] == 'Groundzeromosque') &
-                    (df_complete['org_dataset'].isin(['debate_train','debate_test'])), 'org_dataset'] = 'debate_test'
-    df_complete.loc[(df_complete['topic'] == 'Internetaccess') & (
-        df_complete['org_dataset'].isin(['debate_train', 'debate_test'])), 'org_dataset'] = 'debate_train'
+    # df_complete.loc[(df_complete['topic'] == 'Groundzeromosque') &
+    #                 (df_complete['org_dataset'].isin(['debate_train','debate_test'])), 'org_dataset'] = 'debate_test'
+    # df_complete.loc[(df_complete['topic'] == 'Internetaccess') & (
+    #     df_complete['org_dataset'].isin(['debate_train', 'debate_test'])), 'org_dataset'] = 'debate_train'
 
     # Print duplicates
     # Duplicates in political?!

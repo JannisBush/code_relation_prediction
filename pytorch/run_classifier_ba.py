@@ -100,6 +100,9 @@ def main():
         parser.add_argument("--do_eval",
                             action='store_true',
                             help="Whether to run eval on the dev set.")
+        parser.add_argument("--do_train_eval",
+                            action='store_true',
+                            help="Whether to run training and eval.")
         parser.add_argument("--do_cross_val",
                             action='store_true',
                             help="Whether to run cross-validation.")
@@ -133,6 +136,10 @@ def main():
                             type=float,
                             help="Proportion of training to perform linear learning rate warmup for. "
                                  "E.g., 0.1 = 10%% of training.")
+        parser.add_argument('--n_times',
+                            type=int,
+                            default=10,
+                            help="Number of restarts for every parameter setting in train&eval mode")
         parser.add_argument("--no_cuda",
                             action='store_true',
                             help="Whether not to use CUDA when available")
@@ -175,8 +182,10 @@ def main():
         device, n_gpu))
 
     # Fail if the arguments are invalid
-    if not args.do_train and not args.do_eval and not args.do_cross_val and not args.do_visualization:
-        raise ValueError("At least one of `do_train`, `do_eval` `do_cross_val` or `do_visualization` must be True.")
+    if not args.do_train and not args.do_eval and not args.do_cross_val and not args.do_visualization \
+            and not args.do_train_eval:
+        raise ValueError("At least one of `do_train`, `do_eval` `do_cross_val` "
+                         "or `do_visualization` or 'do_train_eval` must be True.")
     if os.path.exists(args.output_dir) and os.listdir(
             args.output_dir) and args.do_train and not args.overwrite_output_dir:
         raise ValueError("Output directory ({}) already exists and is not empty. "
@@ -431,6 +440,34 @@ def main():
     tokenizer = BertTokenizer.from_pretrained(args.bert_model, do_lower_case=args.do_lower_case)
     model = BertForSequenceClassification.from_pretrained(args.bert_model, num_labels=num_labels)
     model.to(device)
+
+    # Train and test (N times)
+    if args.do_train_eval:
+        train_features, train_examples, _ = get_features_examples("train")
+        test_features, test_examples, _ = get_features_examples("dev")
+        seed = args.seed
+
+        for i in range(args.n_times):
+
+            # Train
+            do_training(train_features, train_examples)
+            # Eval
+            result, preds = do_eval(test_features, test_examples)
+            save_results([result], [preds])
+
+            # Reset
+            if i+1 < args.n_times:
+                args.seed += 1
+                random.seed(args.seed)
+                np.random.seed(args.seed)
+                torch.manual_seed(args.seed)
+                if n_gpu > 0:
+                    torch.cuda.manual_seed_all(args.seed)
+                # Reset model
+                model = BertForSequenceClassification.from_pretrained(args.bert_model, num_labels=num_labels)
+                model.to(device)
+
+
 
     # Training
     if args.do_train:

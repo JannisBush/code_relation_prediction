@@ -106,6 +106,11 @@ class DataProcessor(object):
 class NoDEProcessor(DataProcessor):
     """Processor for the NoDE data set."""
 
+    def __init__(self, train_data_names, input_to_use):
+        """Sets the train_data and mode for the NoDE dataset."""
+        super().__init__(input_to_use)
+        self.train_data_names = train_data_names
+
     def get_train_examples(self, data_dir):
         """See base class."""
         return self._create_examples(os.path.join(data_dir, "complete_data.tsv"), "train")
@@ -117,7 +122,7 @@ class NoDEProcessor(DataProcessor):
     def get_splits(self, data_dir, splits=2):
         """See base class."""
         df = pd.read_csv(os.path.join(data_dir, "complete_data.tsv"), sep='\t')
-        dataset = df.loc[df['org_dataset'].isin(['debate_train', 'debate_test', 'procon'])]
+        dataset = df.loc[df['org_dataset'].isin(self.train_data_names +['debate_test'])]
         skf = StratifiedKFold(n_splits=splits, random_state=113)
         splits_data = []
         for train_idx, val_idx in skf.split(dataset, dataset['label']):
@@ -135,7 +140,7 @@ class NoDEProcessor(DataProcessor):
         """Creates examples for the training and test sets."""
         df = pd.read_csv(filename, sep='\t')
         if set_type == "train":
-            dataset = df.loc[df['org_dataset'].isin(['debate_train', 'procon'])]
+            dataset = df.loc[df['org_dataset'].isin(self.train_data_names)]
         elif set_type == "test":
             dataset = df.loc[df['org_dataset'].isin(['debate_test'])]
         else:
@@ -379,7 +384,8 @@ def compute_metrics(task_name, preds, labels):
 
 
 processors = {
-    "node": NoDEProcessor,
+    "node": partial(NoDEProcessor, ['debate_train']),
+    "node_ext": partial(NoDEProcessor, ['debate_train', 'procon']),
     "political-as": partial(PoliticalProcessor, "AS"),
     "political-ru": partial(PoliticalProcessor, "RU"),
     "political-asu": partial(PoliticalProcessor, "ASU"),
