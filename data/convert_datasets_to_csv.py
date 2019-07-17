@@ -206,7 +206,10 @@ if __name__ == '__main__':
     # In two cases even the labels are incorrect, therefore ignore
     # print(df_complete[(df_complete.duplicated(subset=['org', 'response'], keep=False)) & (df_complete['org_dataset'].isin(['political']))])
     #df_complete = df_complete.drop_duplicates(subset=['org', 'response'])
-
+    # Drop duplicates of political
+    index_names = df_complete[df_complete.duplicated(subset=['org', 'response'])
+                              & (df_complete['org_dataset'] == 'political')].index
+    df_complete = df_complete.drop(index_names)
 
     # # Here, we only select the rows with correct labels (ignore ComArg)
     # data_to_use = df_complete.loc[df_complete['label'].isin(['attack','support','unrelated'])]
