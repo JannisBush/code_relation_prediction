@@ -46,15 +46,13 @@ if __name__ == '__main__':
 
         data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['tot', 'args', 'attack', 'support'])
 
-        data_stats_org[data_set] = df.loc[df["org_dataset"].isin([data_set])].groupby(['org'],
-                                                                                                        as_index=False).apply(
+        data_stats_org[data_set] = df.loc[df["org_dataset"].isin([data_set])].groupby(['org'], as_index=False).apply(
             lambda r: pd.Series({"attacked": count_values(r, ["attack"]), "supported": count_values(r, ["support"]),
                                  'tot': count_values(r, ['attack', 'support'])}))
 
         data_stats_org[data_set] = add_sum(data_stats_org[data_set], ["attacked", "supported", "tot"])
 
-        data_stats_resp[data_set] = df.loc[df["org_dataset"].isin([data_set])].groupby(['response'],
-                                                                                                         as_index=False).apply(
+        data_stats_resp[data_set] = df.loc[df["org_dataset"].isin([data_set])].groupby(['response'], as_index=False).apply(
             lambda r: pd.Series({"attacks": count_values(r, ["attack"]), "supports": count_values(r, ["support"]),
                                  'tot': count_values(r, ['attack', 'support'])}))
 

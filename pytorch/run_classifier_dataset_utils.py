@@ -123,7 +123,7 @@ class NoDEProcessor(DataProcessor):
         """See base class."""
         df = pd.read_csv(os.path.join(data_dir, "complete_data.tsv"), sep='\t')
         dataset = df.loc[df['org_dataset'].isin(self.train_data_names +['debate_test'])]
-        skf = StratifiedKFold(n_splits=splits, random_state=113)
+        skf = StratifiedKFold(n_splits=splits, shuffle=True, random_state=113)
         splits_data = []
         for train_idx, val_idx in skf.split(dataset, dataset['label']):
             train_examples, train_df = self.create_inputs(dataset.iloc[train_idx])
@@ -173,7 +173,7 @@ class PoliticalProcessor(DataProcessor):
         elif self.task == "RU":
             df = df.replace({'label': {'attack': 'related', 'support': 'related'}})
         dataset = df
-        skf = StratifiedKFold(n_splits=splits, random_state=113)
+        skf = StratifiedKFold(n_splits=splits, shuffle=True, random_state=113)
         splits_data = []
         for train_idx, val_idx in skf.split(dataset, dataset['label']):
             train_examples, train_df = self.create_inputs(dataset.iloc[train_idx])
@@ -226,7 +226,7 @@ class AgreementProcessor(DataProcessor):
         """See base class."""
         df = pd.read_csv(os.path.join(data_dir, "complete_data.tsv"), sep='\t')
         dataset = df.loc[df['org_dataset'].isin(['agreement'])]
-        skf = StratifiedKFold(n_splits=splits, random_state=113)
+        skf = StratifiedKFold(n_splits=splits, shuffle=True, random_state=113)
         splits_data = []
         for train_idx, val_idx in skf.split(dataset, dataset['label']):
             train_examples, train_df = self.create_inputs(dataset.iloc[train_idx])
