@@ -21,11 +21,12 @@ from __future__ import absolute_import, division, print_function
 
 import logging
 import os
+import random
 
 import pandas as pd
 
 from functools import partial
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.model_selection import train_test_split, StratifiedKFold, LeaveOneGroupOut
 from sklearn.metrics import f1_score, classification_report, confusion_matrix
 
 logger = logging.getLogger(__name__)
@@ -151,10 +152,12 @@ class NoDEProcessor(DataProcessor):
 class PoliticalProcessor(DataProcessor):
     """Processor for the Political data set."""
 
-    def __init__(self, task, input_to_use):
+    def __init__(self, task, cv_method, input_to_use):
         """Sets the task and mode for the Political dataset."""
         super().__init__(input_to_use)
         self.task = task
+        # Only gets used in get_splits
+        self.cv_method = cv_method
 
     def get_train_examples(self, data_dir):
         """See base class."""
@@ -173,13 +176,24 @@ class PoliticalProcessor(DataProcessor):
         elif self.task == "RU":
             df = df.replace({'label': {'attack': 'related', 'support': 'related'}})
         dataset = df
-        skf = StratifiedKFold(n_splits=splits, shuffle=True, random_state=113)
-        splits_data = []
-        for train_idx, val_idx in skf.split(dataset, dataset['label']):
-            train_examples, train_df = self.create_inputs(dataset.iloc[train_idx])
-            test_examples, test_df = self.create_inputs(dataset.iloc[val_idx])
-            splits_data.append((train_examples, train_df,
-                                test_examples, test_df))
+        if self.cv_method == 'original':
+            skf = StratifiedKFold(n_splits=splits, shuffle=True, random_state=113)
+            splits_data = []
+            for train_idx, val_idx in skf.split(dataset, dataset['label']):
+                train_examples, train_df = self.create_inputs(dataset.iloc[train_idx])
+                test_examples, test_df = self.create_inputs(dataset.iloc[val_idx])
+                splits_data.append((train_examples, train_df,
+                                    test_examples, test_df))
+        elif self.cv_method == 'topics':
+            logo = LeaveOneGroupOut()
+            splits_data = []
+            for train_idx, val_idx in logo.split(dataset, groups=dataset['topic']):
+                train_examples, train_df = self.create_inputs(dataset.iloc[train_idx])
+                test_examples, test_df = self.create_inputs(dataset.iloc[val_idx])
+                splits_data.append((train_examples, train_df,
+                                    test_examples, test_df))
+        else:
+            raise ValueError("Invalid cv_method, has to be original or topics")
         return splits_data
 
     def get_labels(self):
@@ -214,6 +228,12 @@ class PoliticalProcessor(DataProcessor):
 class AgreementProcessor(DataProcessor):
     """Processor for the Agreement/Disagreement Dataset."""
 
+    def __init__(self, split_topics_remove_duplicates, input_to_use):
+        """Sets the mode for the Agreement dataset."""
+        super().__init__(input_to_use)
+        # Only gets uses in get_train_examples and get_dev_examples
+        self.split_topics_remove_duplicates = split_topics_remove_duplicates
+
     def get_train_examples(self, data_dir):
         """See base class."""
         return self._create_examples(os.path.join(data_dir, "complete_data.tsv"), "train")
@@ -243,7 +263,15 @@ class AgreementProcessor(DataProcessor):
         """Creates examples for the training and test sets."""
         df = pd.read_csv(filename, sep='\t')
         df = df.loc[df['org_dataset'].isin(['agreement'])]
-        train, test = train_test_split(df, test_size=0.2, random_state=113, stratify=df['label'])
+        if not self.split_topics_remove_duplicates:
+            train, test = train_test_split(df, test_size=0.2, random_state=113, stratify=df['label'])
+        else:
+            df = df.drop_duplicates(subset=['org', 'response'])  # Removes all text duplicates
+            topics = list(set(df['topic'].values))
+            random.shuffle(topics, random=lambda: 0.5)  # Deterministic shuffle
+            train = df.loc[df['topic'].isin(topics[:130])]  # First 80% of topics
+            test = df.loc[df['topic'].isin(topics[130:])]  # Last 20% of topics
+
         if set_type == "train":
             dataset = train
         elif set_type == "test":
@@ -377,7 +405,9 @@ def compute_metrics(task_name, preds, labels):
     assert len(preds) == len(labels)
     if task_name == "node":
         return {"acc": simple_accuracy(preds, labels)}
-    elif task_name in ["political-as", "political-ru", "political-asu", "agreement"]:
+    elif task_name in ["political-as", "political-ru", "political-asu",
+                       "political-as-topics", "political-ru-topics", "political-asu-topics",
+                       "agreement", "agreement-topics"]:
         return acc_and_f1(preds, labels)
     else:
         raise KeyError(task_name)
@@ -386,8 +416,12 @@ def compute_metrics(task_name, preds, labels):
 processors = {
     "node": partial(NoDEProcessor, ['debate_train']),
     "node_ext": partial(NoDEProcessor, ['debate_train', 'procon']),
-    "political-as": partial(PoliticalProcessor, "AS"),
-    "political-ru": partial(PoliticalProcessor, "RU"),
-    "political-asu": partial(PoliticalProcessor, "ASU"),
-    "agreement": AgreementProcessor,
+    "political-as": partial(PoliticalProcessor, "AS", "original"),
+    "political-ru": partial(PoliticalProcessor, "RU", "original"),
+    "political-asu": partial(PoliticalProcessor, "ASU", "original"),
+    "political-as-topics": partial(PoliticalProcessor, "AS", "topics"),
+    "political-ru-topics": partial(PoliticalProcessor, "RU", "topics"),
+    "political-asu-topics": partial(PoliticalProcessor, "ASU", "topics"),
+    "agreement": partial(AgreementProcessor, False),
+    "agreement-topics": partial(AgreementProcessor, True),
 }
