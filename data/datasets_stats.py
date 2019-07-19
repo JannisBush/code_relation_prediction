@@ -13,7 +13,7 @@ def count_values(x, labels):
 
 
 def add_sum(x, labels):
-    sums = x.sum(numeric_only=True)
+    sums = x[labels].sum()
     x = x.append(sums, ignore_index=True)
     x[labels] = x[labels].apply(np.int64)
     return x
@@ -34,6 +34,7 @@ if __name__ == '__main__':
     data_stats_topic = {}
     data_stats_org = {}
     data_stats_resp = {}
+    df['irr'] = 'irr' # Column where every row has the same value to be able to use groupby apply
 
     # Create stats by topic, by org argument and by resp argument
     for data_set in ['debate_test', 'debate_train', 'procon', 'debate_extended']:
@@ -42,9 +43,15 @@ if __name__ == '__main__':
                                  'tot': count_values(r, ['attack', 'support']),
                                  'attack': count_values(r, ["attack"]), 'support': count_values(r, ["support"]),
                                  'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(),
-                                 'max_total_len': r['complete_len'].max()}))
+                                 'max_total_len': r['complete_len'].max()})).reset_index(drop=True)
 
-        data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['tot', 'args', 'attack', 'support'])
+        data_stats_topic[data_set] = data_stats_topic[data_set].append(df.loc[df["org_dataset"].isin([data_set])].groupby('irr').apply(
+            lambda r: pd.Series({'topic': 'Total', 'args': count_args(r),
+                                 'tot': count_values(r, ['attack', 'support']),
+                                 'attack': count_values(r, ["attack"]), 'support': count_values(r, ["support"]),
+                                 'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(),
+                                 'max_total_len': r['complete_len'].max()})).reset_index(drop=True)).reset_index(drop=True)
+        #data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['tot', 'args', 'attack', 'support'])
 
         data_stats_org[data_set] = df.loc[df["org_dataset"].isin([data_set])].groupby(['org'], as_index=False).apply(
             lambda r: pd.Series({"attacked": count_values(r, ["attack"]), "supported": count_values(r, ["support"]),
@@ -68,7 +75,16 @@ if __name__ == '__main__':
              'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(),
              'max_total_len': r['complete_len'].max()}))
 
-    data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['tot', 'args', 'attack', 'support', 'unrelated'])
+    data_stats_topic[data_set] = data_stats_topic[data_set].append(
+        df.loc[df["org_dataset"].isin([data_set])].groupby('irr').apply(
+            lambda r: pd.Series({'topic': "Total", 'args': count_args(r), 'tot': count_values(r, ['attack', 'support', 'unrelated']),
+             'attack': count_values(r, ["attack"]), 'support': count_values(r, ["support"]),
+             'unrelated': count_values(r, ['unrelated']),
+             'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(),
+             'max_total_len': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
+        drop=True)
+    #data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['tot', 'args', 'attack', 'support', 'unrelated'])
+    #data_stats_topic[data_set].loc[data_stats_topic[data_set]['topic'].isna(), 'topic'] = 'Total'
 
     data_stats_org[data_set] = df.loc[df["org_dataset"].isin([data_set])].groupby(['org'],
                                                                                                     as_index=False).apply(
@@ -101,7 +117,19 @@ if __name__ == '__main__':
              'unrelated': count_values(r, ['unrelated']),
              'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(),
              'max_total_len': r['complete_len'].max()}))
-    data_stats_author = add_sum(data_stats_author, ['tot', 'args', 'attack', 'support', 'unrelated'])
+
+    #data_stats_author = add_sum(data_stats_author, ['tot', 'args', 'attack', 'support', 'unrelated'])
+    data_stats_author = data_stats_author.append(
+        df.loc[df["org_dataset"].isin([data_set])].groupby('irr').apply(
+            lambda r: pd.Series({'author_resp': 'Total',
+             "author_org": "",
+             'args': count_args(r),
+             'tot': count_values(r, ['attack', 'support', 'unrelated']),
+             'attack': count_values(r, ["attack"]), 'support': count_values(r, ["support"]),
+             'unrelated': count_values(r, ['unrelated']),
+             'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(),
+             'max_total_len': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
+        drop=True)
 
     # Unique arguments for Nixon and Kennedy
     data_use = df.loc[df["org_dataset"].isin([data_set])]
@@ -122,8 +150,18 @@ if __name__ == '__main__':
              'unrelated': count_values(r, ['unrelated']),
              'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(),
              'max_total_len': r['complete_len'].max()}))
-    data_stats_total = add_sum(data_stats_total,
-                               ['tot', 'args', 'support/agreement', 'attack/disagreement', 'unrelated'])
+
+    data_stats_total = data_stats_total.append(
+        df.groupby('irr').apply(
+            lambda r: pd.Series({'dataset': 'Total', 'args': count_args(r),
+             'tot': count_values(r, ['attack', 'support', 'unrelated', 'agreement', 'disagreement']),
+             'attack/disagreement': count_values(r, ["attack", "disagreement"]),
+             'support/agreement': count_values(r, ["support", "agreement"]),
+             'unrelated': count_values(r, ['unrelated']),
+             'mean_total_len': r['complete_len'].mean(), 'median_total_len': r['complete_len'].median(),
+             'max_total_len': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
+        drop=True)
+    #data_stats_total = add_sum(data_stats_total,['tot', 'args', 'support/agreement', 'attack/disagreement', 'unrelated'])
 
     # List of all stats tables
     data_stats = [data_stats_org, data_stats_author, data_stats_resp, data_stats_topic, data_stats_total]
@@ -176,6 +214,8 @@ if __name__ == '__main__':
         os.makedirs('stats')
     if not os.path.exists('plots'):
         os.makedirs('plots')
+    if not os.path.exists('thesis'):
+        os.makedirs('thesis')
     data_stats_author.to_csv('./stats/data_stats_author.tsv', encoding='utf-8', sep='\t', index=False)
     data_nix_ken.to_csv('./stats/data_nix_ken.tsv', encoding='utf-8', sep='\t', index=False)
     data_stats_total.to_csv('./stats/data_stats_total.tsv', encoding='utf-8', sep='\t', index=False)
@@ -183,3 +223,9 @@ if __name__ == '__main__':
     np.save('./stats/data_stats_org.npy', data_stats_org)
     np.save('./stats/data_stats_resp.npy', data_stats_resp)
     np.save('./stats/data_stats_topic.npy', data_stats_topic)
+
+    # Save for thesis
+    data_stats_topic['debate_train'].to_csv('./thesis/debate_train_topics.csv', encoding='utf-8', index=False)
+    data_stats_topic['debate_test'].to_csv('./thesis/debate_test_topics.csv', encoding='utf-8', index=False)
+    data_stats_topic['procon'].to_csv('./thesis/procon_topics.csv', encoding='utf-8', index=False)
+
