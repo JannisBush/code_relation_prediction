@@ -140,6 +140,26 @@ if __name__ == '__main__':
     data_nix_ken = data_use1.append(data_use2)
     print(data_nix_ken.groupby("author").nunique())
 
+    # Agreement
+    data_set = 'agreement'
+    data_stats_topic[data_set] = df.loc[df["org_dataset"].isin([data_set])].groupby('topic').apply(
+        lambda r: pd.Series({'Topic': r['topic'].iloc[0], 'Unique arguments': count_args(r),
+                             'Total pairs': count_values(r, ['agreement', 'disagreement']),
+                             'Agreement': count_values(r, ["agreement"]), 'Disagreement': count_values(r, ["disagreement"]),
+                             'Mean total tokens': r['complete_len'].mean(),
+                             'Median total tokens': r['complete_len'].median(),
+                             'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)
+
+    data_stats_topic[data_set] = data_stats_topic[data_set].append(
+        df.loc[df["org_dataset"].isin([data_set])].groupby('irr').apply(
+            lambda r: pd.Series({'Topic': 'Total', 'Unique arguments': count_args(r),
+                                 'Total pairs': count_values(r, ['agreement', 'disagreement']),
+                                 'Agreement': count_values(r, ["agreement"]), 'Disagreement': count_values(r, ["disagreement"]),
+                                 'Mean total tokens': r['complete_len'].mean(),
+                                 'Median total tokens': r['complete_len'].median(),
+                                 'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
+        drop=True)
+
     # Overall stats of the different datasets
     data_stats_total = df.groupby('org_dataset').apply(
         lambda r: pd.Series(
@@ -228,4 +248,6 @@ if __name__ == '__main__':
     data_stats_topic['debate_train'].to_csv('./thesis/debate_train_topics.csv', encoding='utf-8', index=False)
     data_stats_topic['debate_test'].to_csv('./thesis/debate_test_topics.csv', encoding='utf-8', index=False)
     data_stats_topic['procon'].to_csv('./thesis/procon_topics.csv', encoding='utf-8', index=False)
+    data_stats_topic['political'].to_csv('./thesis/political_topics.tsv', encoding='utf-8', sep='\t', index=False)
+    data_stats_topic['agreement'].to_csv('./thesis/agreement_topics.csv', encoding='utf-8', index=False)
 
