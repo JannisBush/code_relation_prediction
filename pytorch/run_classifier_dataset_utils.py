@@ -100,6 +100,10 @@ class DataProcessor(object):
             return dataset.apply(
                 lambda x: InputExample(guid=None, text_a=x["response"], text_b=None, label=x["label"]),
                 axis=1), dataset
+        elif self.input_to_use == "response-org":
+            return dataset.apply(
+                lambda x: InputExample(guid=None, text_a=x["response"], text_b=x["org"], label=x["label"]),
+                axis=1), dataset
         else:
             raise ValueError("Invalid input_to_use, has to be one of both, org or response.")
 
@@ -403,7 +407,7 @@ def acc_and_f1(preds, labels):
 def compute_metrics(task_name, preds, labels):
     """Computes and returns the correct metric for the given task."""
     assert len(preds) == len(labels)
-    if task_name == "node":
+    if task_name in ["node", "node-ext"]:
         return {"acc": simple_accuracy(preds, labels)}
     elif task_name in ["political-as", "political-ru", "political-asu",
                        "political-as-topics", "political-ru-topics", "political-asu-topics",
@@ -415,7 +419,7 @@ def compute_metrics(task_name, preds, labels):
 
 processors = {
     "node": partial(NoDEProcessor, ['debate_train']),
-    "node_ext": partial(NoDEProcessor, ['debate_train', 'procon']),
+    "node-ext": partial(NoDEProcessor, ['debate_train', 'procon']),
     "political-as": partial(PoliticalProcessor, "AS", "original"),
     "political-ru": partial(PoliticalProcessor, "RU", "original"),
     "political-asu": partial(PoliticalProcessor, "ASU", "original"),

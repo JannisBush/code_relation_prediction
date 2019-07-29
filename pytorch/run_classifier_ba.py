@@ -93,7 +93,7 @@ def main():
         parser.add_argument("--input_to_use",
                             type=str,
                             default="both",
-                            help="Which input to use. One of both, org, response.")
+                            help="Which input to use. One of both, org, response, response-org.")
         parser.add_argument("--do_train",
                             action='store_true',
                             help="Whether to run training.")
@@ -187,7 +187,7 @@ def main():
         raise ValueError("At least one of `do_train`, `do_eval` `do_cross_val` "
                          "or `do_visualization` or 'do_train_eval` must be True.")
     if os.path.exists(args.output_dir) and os.listdir(
-            args.output_dir) and args.do_train and not args.overwrite_output_dir:
+            args.output_dir) and not args.overwrite_output_dir:
         raise ValueError("Output directory ({}) already exists and is not empty. "
                          "Use the --overwrite_output_dir option.".format(args.output_dir))
     if not os.path.exists(args.output_dir):
