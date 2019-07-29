@@ -42,14 +42,14 @@ if __name__ == '__main__':
             lambda r: pd.Series({'Topic': r['topic'].iloc[0], 'Unique arguments': count_args(r),
                                  'Total pairs': count_values(r, ['attack', 'support']),
                                  'Attack': count_values(r, ["attack"]), 'Support': count_values(r, ["support"]),
-                                 'Mean total tokens': r['complete_len'].mean(), 'Median total tokens': r['complete_len'].median(),
+                                  'Median total tokens': r['complete_len'].median(),
                                  'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)
 
         data_stats_topic[data_set] = data_stats_topic[data_set].append(df.loc[df["org_dataset"].isin([data_set])].groupby('irr').apply(
             lambda r: pd.Series({'Topic': 'Total', 'Unique arguments': count_args(r),
                                  'Total pairs': count_values(r, ['attack', 'support']),
                                  'Attack': count_values(r, ["attack"]), 'Support': count_values(r, ["support"]),
-                                 'Mean total tokens': r['complete_len'].mean(), 'Median total tokens': r['complete_len'].median(),
+                                  'Median total tokens': r['complete_len'].median(),
                                  'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(drop=True)
         #data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['Total pairs', 'Unique arguments', 'attack', 'support'])
 
@@ -72,7 +72,7 @@ if __name__ == '__main__':
             {'Topic': r['topic'].iloc[0], 'Unique arguments': count_args(r), 'Total pairs': count_values(r, ['attack', 'support', 'unrelated']),
              'Attack': count_values(r, ["attack"]), 'Support': count_values(r, ["support"]),
              'Unrelated': count_values(r, ['unrelated']),
-             'Mean total tokens': r['complete_len'].mean(), 'Median total tokens': r['complete_len'].median(),
+              'Median total tokens': r['complete_len'].median(),
              'Max total tokens': r['complete_len'].max()}))
 
     data_stats_topic[data_set] = data_stats_topic[data_set].append(
@@ -80,7 +80,7 @@ if __name__ == '__main__':
             lambda r: pd.Series({'Topic': "Total", 'Unique arguments': count_args(r), 'Total pairs': count_values(r, ['attack', 'support', 'unrelated']),
              'Attack': count_values(r, ["attack"]), 'Support': count_values(r, ["support"]),
              'Unrelated': count_values(r, ['unrelated']),
-             'Mean total tokens': r['complete_len'].mean(), 'Median total tokens': r['complete_len'].median(),
+              'Median total tokens': r['complete_len'].median(),
              'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
         drop=True)
     #data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['Total pairs', 'Unique arguments', 'attack', 'support', 'unrelated'])
@@ -115,7 +115,7 @@ if __name__ == '__main__':
              'Total pairs': count_values(r, ['attack', 'support', 'unrelated']),
              'Attack': count_values(r, ["attack"]), 'Support': count_values(r, ["support"]),
              'Unrelated': count_values(r, ['unrelated']),
-             'Mean total tokens': r['complete_len'].mean(), 'Median total tokens': r['complete_len'].median(),
+              'Median total tokens': r['complete_len'].median(),
              'Max total tokens': r['complete_len'].max()}))
 
     #data_stats_author = add_sum(data_stats_author, ['Total pairs', 'Unique arguments', 'attack', 'support', 'unrelated'])
@@ -127,7 +127,7 @@ if __name__ == '__main__':
              'Total pairs': count_values(r, ['attack', 'support', 'unrelated']),
              'Attack': count_values(r, ["attack"]), 'Support': count_values(r, ["support"]),
              'Unrelated': count_values(r, ['unrelated']),
-             'Mean total tokens': r['complete_len'].mean(), 'Median total tokens': r['complete_len'].median(),
+              'Median total tokens': r['complete_len'].median(),
              'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
         drop=True)
 
@@ -146,7 +146,7 @@ if __name__ == '__main__':
         lambda r: pd.Series({'Topic': r['topic'].iloc[0], 'Unique arguments': count_args(r),
                              'Total pairs': count_values(r, ['agreement', 'disagreement']),
                              'Agreement': count_values(r, ["agreement"]), 'Disagreement': count_values(r, ["disagreement"]),
-                             'Mean total tokens': r['complete_len'].mean(),
+                             
                              'Median total tokens': r['complete_len'].median(),
                              'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)
 
@@ -155,7 +155,7 @@ if __name__ == '__main__':
             lambda r: pd.Series({'Topic': 'Total', 'Unique arguments': count_args(r),
                                  'Total pairs': count_values(r, ['agreement', 'disagreement']),
                                  'Agreement': count_values(r, ["agreement"]), 'Disagreement': count_values(r, ["disagreement"]),
-                                 'Mean total tokens': r['complete_len'].mean(),
+                                 
                                  'Median total tokens': r['complete_len'].median(),
                                  'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
         drop=True)
@@ -168,7 +168,7 @@ if __name__ == '__main__':
              'Attack/Disagreement': count_values(r, ["attack", "disagreement"]),
              'Support/Agreement': count_values(r, ["support", "agreement"]),
              'Unrelated': count_values(r, ['unrelated']),
-             'Mean total tokens': r['complete_len'].mean(), 'Median total tokens': r['complete_len'].median(),
+              'Median total tokens': r['complete_len'].median(),
              'Max total tokens': r['complete_len'].max()}))
 
     data_stats_total = data_stats_total.append(
@@ -178,7 +178,7 @@ if __name__ == '__main__':
              'Attack/Disagreement': count_values(r, ["attack", "disagreement"]),
              'Support/Agreement': count_values(r, ["support", "agreement"]),
              'Unrelated': count_values(r, ['unrelated']),
-             'Mean total tokens': r['complete_len'].mean(), 'Median total tokens': r['complete_len'].median(),
+              'Median total tokens': r['complete_len'].median(),
              'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
         drop=True)
     #data_stats_total = add_sum(data_stats_total,['Total pairs', 'Unique arguments', 'support/agreement', 'attack/disagreement', 'unrelated'])
