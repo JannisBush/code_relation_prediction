@@ -42,15 +42,15 @@ if __name__ == '__main__':
             lambda r: pd.Series({'Topic': r['topic'].iloc[0], 'Unique arguments': count_args(r),
                                  'Total pairs': count_values(r, ['attack', 'support']),
                                  'Attack': count_values(r, ["attack"]), 'Support': count_values(r, ["support"]),
-                                  'Median total tokens': r['complete_len'].median(),
-                                 'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)
+                                  'Median combined tokens': r['complete_len'].median(),
+                                 'Max combined tokens': r['complete_len'].max()})).reset_index(drop=True)
 
         data_stats_topic[data_set] = data_stats_topic[data_set].append(df.loc[df["org_dataset"].isin([data_set])].groupby('irr').apply(
             lambda r: pd.Series({'Topic': 'Total', 'Unique arguments': count_args(r),
                                  'Total pairs': count_values(r, ['attack', 'support']),
                                  'Attack': count_values(r, ["attack"]), 'Support': count_values(r, ["support"]),
-                                  'Median total tokens': r['complete_len'].median(),
-                                 'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(drop=True)
+                                  'Median combined tokens': r['complete_len'].median(),
+                                 'Max combined tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(drop=True)
         #data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['Total pairs', 'Unique arguments', 'attack', 'support'])
 
         data_stats_org[data_set] = df.loc[df["org_dataset"].isin([data_set])].groupby(['org'], as_index=False).apply(
@@ -72,16 +72,16 @@ if __name__ == '__main__':
             {'Topic': r['topic'].iloc[0], 'Unique arguments': count_args(r), 'Total pairs': count_values(r, ['attack', 'support', 'unrelated']),
              'Attack': count_values(r, ["attack"]), 'Support': count_values(r, ["support"]),
              'Unrelated': count_values(r, ['unrelated']),
-              'Median total tokens': r['complete_len'].median(),
-             'Max total tokens': r['complete_len'].max()}))
+              'Median combined tokens': r['complete_len'].median(),
+             'Max combined tokens': r['complete_len'].max()}))
 
     data_stats_topic[data_set] = data_stats_topic[data_set].append(
         df.loc[df["org_dataset"].isin([data_set])].groupby('irr').apply(
             lambda r: pd.Series({'Topic': "Total", 'Unique arguments': count_args(r), 'Total pairs': count_values(r, ['attack', 'support', 'unrelated']),
              'Attack': count_values(r, ["attack"]), 'Support': count_values(r, ["support"]),
              'Unrelated': count_values(r, ['unrelated']),
-              'Median total tokens': r['complete_len'].median(),
-             'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
+              'Median combined tokens': r['complete_len'].median(),
+             'Max combined tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
         drop=True)
     #data_stats_topic[data_set] = add_sum(data_stats_topic[data_set], ['Total pairs', 'Unique arguments', 'attack', 'support', 'unrelated'])
     #data_stats_topic[data_set].loc[data_stats_topic[data_set]['topic'].isna(), 'topic'] = 'Total'
@@ -115,8 +115,8 @@ if __name__ == '__main__':
              'Total pairs': count_values(r, ['attack', 'support', 'unrelated']),
              'Attack': count_values(r, ["attack"]), 'Support': count_values(r, ["support"]),
              'Unrelated': count_values(r, ['unrelated']),
-              'Median total tokens': r['complete_len'].median(),
-             'Max total tokens': r['complete_len'].max()}))
+              'Median combined tokens': r['complete_len'].median(),
+             'Max combined tokens': r['complete_len'].max()}))
 
     #data_stats_author = add_sum(data_stats_author, ['Total pairs', 'Unique arguments', 'attack', 'support', 'unrelated'])
     data_stats_author = data_stats_author.append(
@@ -127,8 +127,8 @@ if __name__ == '__main__':
              'Total pairs': count_values(r, ['attack', 'support', 'unrelated']),
              'Attack': count_values(r, ["attack"]), 'Support': count_values(r, ["support"]),
              'Unrelated': count_values(r, ['unrelated']),
-              'Median total tokens': r['complete_len'].median(),
-             'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
+              'Median combined tokens': r['complete_len'].median(),
+             'Max combined tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
         drop=True)
 
     # Unique arguments for Nixon and Kennedy
@@ -147,8 +147,8 @@ if __name__ == '__main__':
                              'Total pairs': count_values(r, ['agreement', 'disagreement']),
                              'Agreement': count_values(r, ["agreement"]), 'Disagreement': count_values(r, ["disagreement"]),
                              
-                             'Median total tokens': r['complete_len'].median(),
-                             'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)
+                             'Median combined tokens': r['complete_len'].median(),
+                             'Max combined tokens': r['complete_len'].max()})).reset_index(drop=True)
 
     data_stats_topic[data_set] = data_stats_topic[data_set].append(
         df.loc[df["org_dataset"].isin([data_set])].groupby('irr').apply(
@@ -156,8 +156,8 @@ if __name__ == '__main__':
                                  'Total pairs': count_values(r, ['agreement', 'disagreement']),
                                  'Agreement': count_values(r, ["agreement"]), 'Disagreement': count_values(r, ["disagreement"]),
                                  
-                                 'Median total tokens': r['complete_len'].median(),
-                                 'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
+                                 'Median combined tokens': r['complete_len'].median(),
+                                 'Max combined tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
         drop=True)
 
     # Overall stats of the different datasets
@@ -168,8 +168,8 @@ if __name__ == '__main__':
              'Attack/Disagreement': count_values(r, ["attack", "disagreement"]),
              'Support/Agreement': count_values(r, ["support", "agreement"]),
              'Unrelated': count_values(r, ['unrelated']),
-              'Median total tokens': r['complete_len'].median(),
-             'Max total tokens': r['complete_len'].max()}))
+              'Median combined tokens': r['complete_len'].median(),
+             'Max combined tokens': r['complete_len'].max()}))
 
     data_stats_total = data_stats_total.append(
         df.groupby('irr').apply(
@@ -178,8 +178,8 @@ if __name__ == '__main__':
              'Attack/Disagreement': count_values(r, ["attack", "disagreement"]),
              'Support/Agreement': count_values(r, ["support", "agreement"]),
              'Unrelated': count_values(r, ['unrelated']),
-              'Median total tokens': r['complete_len'].median(),
-             'Max total tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
+              'Median combined tokens': r['complete_len'].median(),
+             'Max combined tokens': r['complete_len'].max()})).reset_index(drop=True)).reset_index(
         drop=True)
     #data_stats_total = add_sum(data_stats_total,['Total pairs', 'Unique arguments', 'support/agreement', 'attack/disagreement', 'unrelated'])
 
