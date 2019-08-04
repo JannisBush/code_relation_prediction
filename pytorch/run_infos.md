@@ -18,7 +18,7 @@
     - `python run_classifier_ba.py  --task_name "political-as-topics" --output_dir pol_as_topics/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
     - `python run_classifier_ba.py  --task_name "political-ru-topics" --output_dir pol_ru_topics/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
 - Agreement train/test split (test if duplicates + same topics make the task to easy)
-    - `python run_classifier_ba.py  --task_name "agreement-topics" --output_dir agreement_topics/train_test1 --do_train --do_eval --do_lower_case --num_train_epochs 3 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+    - `python run_classifier_ba.py  --task_name "agreement-topics" --output_dir agreement_topics_new/train_test1 --do_train --do_eval --do_lower_case --num_train_epochs 3 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
 - Changes in org + resp:
     - Only makes sense for NoDE and political
     - Only org + resp:
