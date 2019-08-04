@@ -271,10 +271,10 @@ class AgreementProcessor(DataProcessor):
             train, test = train_test_split(df, test_size=0.2, random_state=113, stratify=df['label'])
         else:
             df = df.drop_duplicates(subset=['org', 'response'])  # Removes all text duplicates
-            topics = list(set(df['topic'].values))
-            random.shuffle(topics, random=lambda: 0.5)  # Deterministic shuffle
-            train = df.loc[df['topic'].isin(topics[:130])]  # First 80% of topics
-            test = df.loc[df['topic'].isin(topics[130:])]  # Last 20% of topics
+            topics = sorted(set(df['topic'].values))
+            random.Random(1).shuffle(topics)  # Deterministic shuffle
+            train = df.loc[df['topic'].isin(topics[:130])].sample(frac=1, random_state=113)  # First 80% of topics
+            test = df.loc[df['topic'].isin(topics[130:])].sample(frac=1, random_state=113)  # Last 20% of topics
 
         if set_type == "train":
             dataset = train
