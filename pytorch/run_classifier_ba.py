@@ -211,7 +211,7 @@ def main():
 
         def convert(split, modus, exs):
             """Converts the examples or load them from cache."""
-            cached_features_file = os.path.join(args.data_dir, '{0}_{1}_{2}_{3}_{4}_{5}'.format(modus,
+            cached_features_file = os.path.join(args.data_dir, 'cache', '{0}_{1}_{2}_{3}_{4}_{5}'.format(modus,
                 list(filter(None, args.bert_model.split('/'))).pop(),
                             str(args.max_seq_length),
                             str(task_name), str(args.input_to_use), split))

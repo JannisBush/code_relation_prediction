@@ -2,12 +2,12 @@
 - NoDe:
     - `./run_all_node.sh comp`
 - Political:
-    - `python run_classifier_ba.py  --task_name "political-as" --output_dir pol_as/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
-    - `python run_classifier_ba.py  --task_name "political-ru" --output_dir pol_ru/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
-    - `python run_classifier_ba.py  --task_name "political-asu" --output_dir pol_asu/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5` 
+    - `python run_classifier_ba.py  --task_name "political-as" --output_dir res/pol_as/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+    - `python run_classifier_ba.py  --task_name "political-ru" --output_dir res/pol_ru/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+    - `python run_classifier_ba.py  --task_name "political-asu" --output_dir res/pol_asu/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5` 
     - (Also did runs with --seed 43 and --epochs 4, but results not reported)
 - Agreement:
-    - `python run_classifier_ba.py  --task_name "agreement" --output_dir agreement_new/crossval1 --do_cross_val --do_lower_case --num_train_epochs 3 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+    - `python run_classifier_ba.py  --task_name "agreement" --output_dir res/agreement_new/crossval1 --do_cross_val --do_lower_case --num_train_epochs 3 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
     
 # Additional Experiments
 - Only some of the "best" parameters from the comparative results are used, for political only as (and ru) are used (asu is too hard already)
@@ -15,24 +15,24 @@
 - NoDe + procon (test more data)
     - `./run_all_node.sh procon`
 - Political topic CV (test if works also for "better crossval scheme) 
-    - `python run_classifier_ba.py  --task_name "political-as-topics" --output_dir pol_as_topics/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
-    - `python run_classifier_ba.py  --task_name "political-ru-topics" --output_dir pol_ru_topics/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+    - `python run_classifier_ba.py  --task_name "political-as-topics" --output_dir res/pol_as_topics/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+    - `python run_classifier_ba.py  --task_name "political-ru-topics" --output_dir res/pol_ru_topics/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
 - Agreement train/test split (test if duplicates + same topics make the task to easy)
-    - `python run_classifier_ba.py  --task_name "agreement-topics" --output_dir agreement_topics_new/train_test1 --do_train --do_eval --do_lower_case --num_train_epochs 3 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+    - `python run_classifier_ba.py  --task_name "agreement-topics" --output_dir res/agreement_topics_new/train_test1 --do_train --do_eval --do_lower_case --num_train_epochs 3 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
 - Changes in org + resp:
     - Only makes sense for NoDE and political
     - Only org + resp:
         - NoDE:
             - `./run_all_node.sh only`
         - Political:
-            - `python run_classifier_ba.py  --task_name "political-as" --output_dir pol_as_org/crossval1 --input_to_use "org" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
-            - `python run_classifier_ba.py  --task_name "political-as" --output_dir pol_as_resp/crossval1 --input_to_use "response" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
-            - `python run_classifier_ba.py  --task_name "political-ru" --output_dir pol_ru_org/crossval1 --input_to_use "org" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
-            - `python run_classifier_ba.py  --task_name "political-ru" --output_dir pol_ru_resp/crossval1 --input_to_use "response" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+            - `python run_classifier_ba.py  --task_name "political-as" --output_dir res/pol_as_org/crossval1 --input_to_use "org" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+            - `python run_classifier_ba.py  --task_name "political-as" --output_dir res/pol_as_resp/crossval1 --input_to_use "response" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+            - `python run_classifier_ba.py  --task_name "political-ru" --output_dir res/pol_ru_org/crossval1 --input_to_use "org" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+            - `python run_classifier_ba.py  --task_name "political-ru" --output_dir res/pol_ru_resp/crossval1 --input_to_use "response" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
     - Change order of org and response
         - NoDE:
             - `./run_all_node.sh resporg`
         - Political:
-            - `python run_classifier_ba.py  --task_name "political-as" --output_dir pol_as_resporg/crossval1 --input_to_use "response-org" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
-            - `python run_classifier_ba.py  --task_name "political-ru" --output_dir pol_ru_resporg/crossval1 --input_to_use "response-org" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+            - `python run_classifier_ba.py  --task_name "political-as" --output_dir res/pol_as_resporg/crossval1 --input_to_use "response-org" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
+            - `python run_classifier_ba.py  --task_name "political-ru" --output_dir res/pol_ru_resporg/crossval1 --input_to_use "response-org" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
 

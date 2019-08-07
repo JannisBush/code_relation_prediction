@@ -17,12 +17,12 @@ if [ "$1" = "comp" ]; then
                     if [ $bert_model = 'bert-large-uncased' ]
                     then
                         python run_classifier_ba.py --do_train_eval \
-                        --output_dir node_both_paper/${i}_${bert_model}_${epochs}_${batch_size}_${lr}/ --do_lower_case \
+                        --output_dir res/node_both_paper/${i}_${bert_model}_${epochs}_${batch_size}_${lr}/ --do_lower_case \
                         --train_batch_size $batch_size --learning_rate $lr --num_train_epochs $epochs --log_level warn \
                         --bert_model $bert_model --gradient_accumulation_steps $((batch_size / 4))
                     else
                         python run_classifier_ba.py --do_train_eval \
-                        --output_dir node_both_paper/${i}_${bert_model}_${epochs}_${batch_size}_${lr}/ --do_lower_case \
+                        --output_dir res/node_both_paper/${i}_${bert_model}_${epochs}_${batch_size}_${lr}/ --do_lower_case \
                         --train_batch_size $batch_size --learning_rate $lr --num_train_epochs $epochs --log_level warn \
                         --bert_model $bert_model
                     fi
@@ -45,7 +45,7 @@ elif [ "$1" = "procon" ]; then
                     echo $lr $epochs $batch_size $bert_model $i
 
                     python run_classifier_ba.py --do_train_eval \
-                    --output_dir node_both_procon/${i}_${bert_model}_${epochs}_${batch_size}_${lr}/ --do_lower_case \
+                    --output_dir res/node_both_procon/${i}_${bert_model}_${epochs}_${batch_size}_${lr}/ --do_lower_case \
                     --train_batch_size $batch_size --learning_rate $lr --num_train_epochs $epochs --log_level warn \
                     --bert_model $bert_model --task_name "node-ext" --n_times 30
 
@@ -68,12 +68,12 @@ elif [ "$1" = "only" ]; then
                     echo $lr $epochs $batch_size $bert_model $i
 
                     python run_classifier_ba.py --do_train_eval \
-                    --output_dir node_org/${i}_${bert_model}_${epochs}_${batch_size}_${lr}/ --do_lower_case \
+                    --output_dir res/node_org/${i}_${bert_model}_${epochs}_${batch_size}_${lr}/ --do_lower_case \
                     --train_batch_size $batch_size --learning_rate $lr --num_train_epochs $epochs --log_level warn \
                     --bert_model $bert_model --input_to_use "org" --n_times 30
 
                     python run_classifier_ba.py --do_train_eval \
-                    --output_dir node_resp/${i}_${bert_model}_${epochs}_${batch_size}_${lr}/ --do_lower_case \
+                    --output_dir res/node_resp/${i}_${bert_model}_${epochs}_${batch_size}_${lr}/ --do_lower_case \
                     --train_batch_size $batch_size --learning_rate $lr --num_train_epochs $epochs --log_level warn \
                     --bert_model $bert_model --input_to_use "response" --n_times 30
 
@@ -96,7 +96,7 @@ elif [ "$1" = "resporg" ]; then
                     echo $lr $epochs $batch_size $bert_model $i
 
                     python run_classifier_ba.py --do_train_eval \
-                    --output_dir node_both_reversed/${i}_${bert_model}_${epochs}_${batch_size}_${lr}/ --do_lower_case \
+                    --output_dir res/node_both_reversed/${i}_${bert_model}_${epochs}_${batch_size}_${lr}/ --do_lower_case \
                     --train_batch_size $batch_size --learning_rate $lr --num_train_epochs $epochs --log_level warn \
                     --bert_model $bert_model --input_to_use "response-org" --n_times 30
 
