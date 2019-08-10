@@ -31,7 +31,6 @@ Add the option `--gradient-accumulation-steps X` to the script, try X=2 and if s
     - `python run_classifier_ba.py  --task_name "political-as" --output_dir res/pol_as/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
     - `python run_classifier_ba.py  --task_name "political-ru" --output_dir res/pol_ru/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
     - `python run_classifier_ba.py  --task_name "political-asu" --output_dir res/pol_asu/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5` 
-    - (Also did runs with --seed 43 and --epochs 4, but results not reported)
 - Agreement:
     - `python run_classifier_ba.py  --task_name "agreement" --output_dir res/agreement_new/crossval1 --do_cross_val --do_lower_case --num_train_epochs 3 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
     
