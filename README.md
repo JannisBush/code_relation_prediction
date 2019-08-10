@@ -1,21 +1,26 @@
 # Relation Prediction in Argument Mining with Pre-trained Deep Bidirectional Transformers
 
-Code for BA Thesis
+Code for BA Thesis **Relation Prediction in Argument Mining with Pre-trained Deep Bidirectional Transformers**.
+The training code is based on `pytorch-pretained-bert=0.6.2` (now called [PyTorch-Transformers](https://github.com/huggingface/pytorch-transformers)) .
 
-Structure of Repo:
-- data
-- pytorch
-- result_pres
+## Structure of this Repository:
+- `data/`: Contains the datasets and converting files for the thesis.
+- `pytorch/`: Contains the main training code for the thesis.
+- `result_pres/`: Contains the notebooks generating and presenting the results.
+- `req.txt`: Requirement file.
+- `environment.yml`: Environment file.
 
-1. Clone this repo
-2. Create Conda env .... 
-3. Download data to data/datasets 
-4. Run data/convert_datasets_to_csv.py
-5. Run all runs in pytorch (explained in run_infos.md)
-6. Run data/datasets_stats.py
-7. Run results_pres/results_pres.ipynb
+## How to reproduce the results
+(*Only tested on Ubuntu 16.04, other recent Linux systems should work. Windows and Mac may work too. 
+A NVIDIA GTX 1080 (8gb) was used for the training. The code also works without a GPU, but it will take longer. On GPUs with less than 8gb RAM, there will be some OOM-Errors, but they can be fixed by using gradient-accumulation as explained in the pytorch folder*)
 
-Optional:
-1. Run datasets_plots.py
-2. Run pytorch visualization
-3. Optional ipynb with LIME and Scattertext etc.
+If you are only interested in the results have a look at the thesis or the html files in `result_pres/`. Otherwise, follow these instructions.
+1. Clone this repo: 
+    - `git clone https://gitlab.com/JannisBush/code_relation_prediction.git`
+2. Create conda env in this repository and activate: 
+    - `conda env create --file environment.yml` or `conda create --name pytorch --file req.txt`
+    - `conda activate pytorch`
+    - This assumes that a recent version of conda is installed. I recommend, miniconda python3.7 [download here](https://docs.conda.io/en/latest/miniconda.html)
+3. Follow the instructions in the `data` folder to download the datasets and convert them.
+4. Follow the instructions in the `pytorch` folder to reproduce the results (optional, for testing purpose only one experiment can be reproduced)
+5. Go to the `results_pres` folder and run the two notebooks to see and generate the plots and tables.

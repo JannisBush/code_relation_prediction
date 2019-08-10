@@ -61,6 +61,3 @@ Add the option `--gradient-accumulation-steps X` to the script, try X=2 and if s
         - Political:
             - `python run_classifier_ba.py  --task_name "political-as" --output_dir res/pol_as_resporg/crossval1 --input_to_use "response-org" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
             - `python run_classifier_ba.py  --task_name "political-ru" --output_dir res/pol_ru_resporg/crossval1 --input_to_use "response-org" --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
-
-
-## New runs

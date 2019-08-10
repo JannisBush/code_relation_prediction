@@ -19,3 +19,9 @@
            - Download the dataset from [here](http://www-sop.inria.fr/NoDE/ResourcesNoDE/debatepedia.zip) and extract it into that folder. (Final structure `NoDE/debatepedia/...xml`)
         - `Political/`: Folder to hold the political dataset.
             - Download the dataset from [here](http://hltdistributor.fbk.eu/redirect.php?val=ccd85a20fb19355451f5d5f7bbd8e527) and extract it into that folder.
+            
+## Instructions
+- First download the datasets to the correct places.
+- Then run `python convert_datasets_to_csv.py`.
+- Then run `python datasets_stats.py`.
+- (Optional: run `python datasets_plots.py`)
