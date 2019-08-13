@@ -13282,6 +13282,44 @@ div#notebook {
 </div>
 
 </div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Background</span>
+<span class="c1"># Example tokenization</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">BertTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s1">&#39;bert-base-uncased&#39;</span><span class="p">,</span> <span class="n">do_lower_case</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;WordPiece tokens are quite helpful.&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;Positional encodings are clever.&quot;</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>[&#39;word&#39;, &#39;##piece&#39;, &#39;token&#39;, &#39;##s&#39;, &#39;are&#39;, &#39;quite&#39;, &#39;helpful&#39;, &#39;.&#39;]
+[&#39;position&#39;, &#39;##al&#39;, &#39;encoding&#39;, &#39;##s&#39;, &#39;are&#39;, &#39;clever&#39;, &#39;.&#39;]
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
 <div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
 </div><div class="inner_cell">
 <div class="text_cell_render border-box-sizing rendered_html">
@@ -13309,7 +13347,7 @@ div#notebook {
 </div>
 <div class="cell border-box-sizing code_cell rendered">
 <div class="input">
-<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
 <div class="inner_cell">
     <div class="input_area">
 <div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># NoDE (consisting of debatepedia train and test and procon)</span>
@@ -13327,7 +13365,7 @@ div#notebook {
 
 <div class="output_area">
 
-    <div class="prompt output_prompt">Out[3]:</div>
+    <div class="prompt output_prompt">Out[4]:</div>
 
 
 
@@ -13639,40 +13677,6 @@ div#notebook {
 </div>
 </div>
 
-</div>
-
-</div>
-</div>
-
-</div>
-<div class="cell border-box-sizing code_cell rendered">
-<div class="input">
-<div class="prompt input_prompt">In&nbsp;[4]:</div>
-<div class="inner_cell">
-    <div class="input_area">
-<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># Example tokenization</span>
-<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">BertTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s1">&#39;bert-base-uncased&#39;</span><span class="p">,</span> <span class="n">do_lower_case</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;Violent games make youth more agressive/violent.&quot;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">tokenize</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
-</pre></div>
-
-    </div>
-</div>
-</div>
-
-<div class="output_wrapper">
-<div class="output">
-
-
-<div class="output_area">
-
-    <div class="prompt"></div>
-
-
-<div class="output_subarea output_stream output_stdout output_text">
-<pre>[&#39;violent&#39;, &#39;games&#39;, &#39;make&#39;, &#39;youth&#39;, &#39;more&#39;, &#39;ag&#39;, &#39;##ress&#39;, &#39;##ive&#39;, &#39;/&#39;, &#39;violent&#39;, &#39;.&#39;]
-</pre>
-</div>
 </div>
 
 </div>
@@ -19713,131 +19717,131 @@ Complete results table:
 
 <div class="output_html rendered_html output_subarea ">
 <style  type="text/css" >
-    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow0_col2 {
+    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow0_col2 {
             background-color:  #9dcae1;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow0_col3 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow0_col3 {
             background-color:  #c3daee;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow0_col4 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow0_col4 {
             background-color:  #f7fbff;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow0_col5 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow0_col5 {
             background-color:  #6fb0d7;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow0_col6 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow0_col6 {
             background-color:  #afd1e7;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow1_col2 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow1_col2 {
             background-color:  #9cc9e1;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow1_col3 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow1_col3 {
             background-color:  #cbdef1;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow1_col4 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow1_col4 {
             background-color:  #7fb9da;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow1_col5 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow1_col5 {
             background-color:  #eff6fc;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow1_col6 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow1_col6 {
             background-color:  #cfe1f2;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow2_col2 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow2_col2 {
             background-color:  #9fcae1;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow2_col3 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow2_col3 {
             background-color:  #c4daee;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow2_col4 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow2_col4 {
             background-color:  #60a7d2;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow2_col5 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow2_col5 {
             background-color:  #f7fbff;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow2_col6 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow2_col6 {
             background-color:  #c7dcef;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow3_col2 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow3_col2 {
             background-color:  #f7fbff;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow3_col3 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow3_col3 {
             background-color:  #f7fbff;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow3_col4 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow3_col4 {
             background-color:  #f7fbff;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow3_col5 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow3_col5 {
             background-color:  #ebf3fb;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow3_col6 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow3_col6 {
             background-color:  #f7fbff;
             color:  #000000;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow4_col2 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow4_col2 {
             background-color:  #08306b;
             color:  #f1f1f1;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow4_col3 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow4_col3 {
             background-color:  #08306b;
             color:  #f1f1f1;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow4_col4 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow4_col4 {
             background-color:  #08306b;
             color:  #f1f1f1;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow4_col5 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow4_col5 {
             background-color:  #08306b;
             color:  #f1f1f1;
-        }    #T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow4_col6 {
+        }    #T_91563e20_bded_11e9_a8bb_87fdb701eb5frow4_col6 {
             background-color:  #08306b;
             color:  #f1f1f1;
-        }</style><table id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543b" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >Author resp</th>        <th class="col_heading level0 col1" >Author org</th>        <th class="col_heading level0 col2" >Unique arguments</th>        <th class="col_heading level0 col3" >Total pairs</th>        <th class="col_heading level0 col4" >Attack</th>        <th class="col_heading level0 col5" >Support</th>        <th class="col_heading level0 col6" >Unrelated</th>    </tr></thead><tbody>
+        }</style><table id="T_91563e20_bded_11e9_a8bb_87fdb701eb5f" ><thead>    <tr>        <th class="blank level0" ></th>        <th class="col_heading level0 col0" >Author resp</th>        <th class="col_heading level0 col1" >Author org</th>        <th class="col_heading level0 col2" >Unique arguments</th>        <th class="col_heading level0 col3" >Total pairs</th>        <th class="col_heading level0 col4" >Attack</th>        <th class="col_heading level0 col5" >Support</th>        <th class="col_heading level0 col6" >Unrelated</th>    </tr></thead><tbody>
                 <tr>
-                        <th id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543blevel0_row0" class="row_heading level0 row0" >0</th>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow0_col0" class="data row0 col0" >Kennedy</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow0_col1" class="data row0 col1" >Kennedy</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow0_col2" class="data row0 col2" >496</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow0_col3" class="data row0 col3" >467</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow0_col4" class="data row0 col4" >2</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow0_col5" class="data row0 col5" >195</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow0_col6" class="data row0 col6" >270</td>
+                        <th id="T_91563e20_bded_11e9_a8bb_87fdb701eb5flevel0_row0" class="row_heading level0 row0" >0</th>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow0_col0" class="data row0 col0" >Kennedy</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow0_col1" class="data row0 col1" >Kennedy</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow0_col2" class="data row0 col2" >496</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow0_col3" class="data row0 col3" >467</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow0_col4" class="data row0 col4" >2</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow0_col5" class="data row0 col5" >195</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow0_col6" class="data row0 col6" >270</td>
             </tr>
             <tr>
-                        <th id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543blevel0_row1" class="row_heading level0 row1" >1</th>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow1_col0" class="data row1 col0" >Kennedy</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow1_col1" class="data row1 col1" >Nixon</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow1_col2" class="data row1 col2" >501</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow1_col3" class="data row1 col3" >418</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow1_col4" class="data row1 col4" >172</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow1_col5" class="data row1 col5" >55</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow1_col6" class="data row1 col6" >191</td>
+                        <th id="T_91563e20_bded_11e9_a8bb_87fdb701eb5flevel0_row1" class="row_heading level0 row1" >1</th>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow1_col0" class="data row1 col0" >Kennedy</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow1_col1" class="data row1 col1" >Nixon</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow1_col2" class="data row1 col2" >501</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow1_col3" class="data row1 col3" >418</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow1_col4" class="data row1 col4" >172</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow1_col5" class="data row1 col5" >55</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow1_col6" class="data row1 col6" >191</td>
             </tr>
             <tr>
-                        <th id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543blevel0_row2" class="row_heading level0 row2" >2</th>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow2_col0" class="data row2 col0" >Nixon</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow2_col1" class="data row2 col1" >Kennedy</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow2_col2" class="data row2 col2" >493</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow2_col3" class="data row2 col3" >460</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow2_col4" class="data row2 col4" >202</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow2_col5" class="data row2 col5" >42</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow2_col6" class="data row2 col6" >216</td>
+                        <th id="T_91563e20_bded_11e9_a8bb_87fdb701eb5flevel0_row2" class="row_heading level0 row2" >2</th>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow2_col0" class="data row2 col0" >Nixon</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow2_col1" class="data row2 col1" >Kennedy</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow2_col2" class="data row2 col2" >493</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow2_col3" class="data row2 col3" >460</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow2_col4" class="data row2 col4" >202</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow2_col5" class="data row2 col5" >42</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow2_col6" class="data row2 col6" >216</td>
             </tr>
             <tr>
-                        <th id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543blevel0_row3" class="row_heading level0 row3" >3</th>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow3_col0" class="data row3 col0" >Nixon</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow3_col1" class="data row3 col1" >Nixon</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow3_col2" class="data row3 col2" >154</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow3_col3" class="data row3 col3" >115</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow3_col4" class="data row3 col4" >2</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow3_col5" class="data row3 col5" >61</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow3_col6" class="data row3 col6" >52</td>
+                        <th id="T_91563e20_bded_11e9_a8bb_87fdb701eb5flevel0_row3" class="row_heading level0 row3" >3</th>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow3_col0" class="data row3 col0" >Nixon</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow3_col1" class="data row3 col1" >Nixon</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow3_col2" class="data row3 col2" >154</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow3_col3" class="data row3 col3" >115</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow3_col4" class="data row3 col4" >2</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow3_col5" class="data row3 col5" >61</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow3_col6" class="data row3 col6" >52</td>
             </tr>
             <tr>
-                        <th id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543blevel0_row4" class="row_heading level0 row4" >4</th>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow4_col0" class="data row4 col0" >Total</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow4_col1" class="data row4 col1" >nan</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow4_col2" class="data row4 col2" >1065</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow4_col3" class="data row4 col3" >1460</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow4_col4" class="data row4 col4" >378</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow4_col5" class="data row4 col5" >353</td>
-                        <td id="T_f41aa09c_bced_11e9_82bb_6b89dcf1543brow4_col6" class="data row4 col6" >729</td>
+                        <th id="T_91563e20_bded_11e9_a8bb_87fdb701eb5flevel0_row4" class="row_heading level0 row4" >4</th>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow4_col0" class="data row4 col0" >Total</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow4_col1" class="data row4 col1" >nan</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow4_col2" class="data row4 col2" >1065</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow4_col3" class="data row4 col3" >1460</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow4_col4" class="data row4 col4" >378</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow4_col5" class="data row4 col5" >353</td>
+                        <td id="T_91563e20_bded_11e9_a8bb_87fdb701eb5frow4_col6" class="data row4 col6" >729</td>
             </tr>
     </tbody></table>
 </div>
@@ -21229,15 +21233,6 @@ weighted avg       0.56      0.56      0.55       731
 
 Author major class baseline AS:
 
-              precision    recall  f1-score   support
-
-      attack       0.79      0.99      0.88       378
-     support       0.98      0.73      0.84       353
-
-    accuracy                           0.86       731
-   macro avg       0.89      0.86      0.86       731
-weighted avg       0.89      0.86      0.86       731
-
 </pre>
 </div>
 </div>
@@ -21250,6 +21245,25 @@ weighted avg       0.89      0.86      0.86       731
 <div class="output_subarea output_stream output_stderr output_text">
 <pre>/data/envs/pytorch/lib/python3.7/site-packages/sklearn/metrics/classification.py:1437: UndefinedMetricWarning: Precision and F-score are ill-defined and being set to 0.0 in labels with no predicted samples.
   &#39;precision&#39;, &#39;predicted&#39;, average, warn_for)
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>              precision    recall  f1-score   support
+
+      attack       0.79      0.99      0.88       378
+     support       0.98      0.73      0.84       353
+
+    accuracy                           0.86       731
+   macro avg       0.89      0.86      0.86       731
+weighted avg       0.89      0.86      0.86       731
+
 </pre>
 </div>
 </div>
