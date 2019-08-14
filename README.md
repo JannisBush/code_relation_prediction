@@ -10,9 +10,9 @@ The training code is based on `pytorch-pretained-bert=0.6.2` (now called [PyTorc
 - `req.txt`: Requirement file.
 - `environment.yml`: Environment file.
 
-## How to reproduce the results
+## How to replicate the results
 (*Only tested on Ubuntu 16.04, other recent Linux systems should work. Windows and Mac may work too. 
-A NVIDIA GTX 1080 (8gb) was used for the training. The code also works without a GPU, but it will take longer. On GPUs with less than 8gb RAM, there will be some OOM-Errors, but they can be fixed by using gradient-accumulation as explained in the pytorch folder*)
+A NVIDIA GTX 1080 (8gb) was used for the training. The code also works without a GPU, but it will take longer. On GPUs with less than 8gb RAM, there will be some OOM-Errors, but they can be fixed by using gradient-accumulation as explained in the pytorch folder or by resorting to the CPU.*)
 
 If you are only interested in the results have a look at the thesis or the html files in `result_pres/`. Otherwise, follow these instructions.
 1. Clone this repo: 
@@ -22,5 +22,5 @@ If you are only interested in the results have a look at the thesis or the html 
     - `conda activate pytorch`
     - This assumes that a recent version of conda is installed. I recommend, miniconda python3.7 [download here](https://docs.conda.io/en/latest/miniconda.html)
 3. Follow the instructions in the `data` folder to download the datasets and convert them.
-4. Follow the instructions in the `pytorch` folder to reproduce the results (optional, for testing purpose only one experiment can be reproduced)
-5. Go to the `results_pres` folder and run the two notebooks to see and generate the plots and tables.
+4. Follow the instructions in the `pytorch` folder to reproduce the results (optional, for testing purposes only one experiment instead of all could be reproduced)
+5. Go to the `results_pres` folder and run the two notebooks to see and generate the plots and tables. 
