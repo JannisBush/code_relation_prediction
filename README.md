@@ -16,7 +16,7 @@ A NVIDIA GTX 1080 (8gb) was used for the training. The code also works without a
 
 If you are only interested in the results have a look at the thesis or the html files in `result_pres/`. Otherwise, follow these instructions.
 1. Clone this repo: 
-    - `git clone hhttps://github.com/JannisBush/code_relation_prediction.git`
+    - `git clone https://github.com/JannisBush/code_relation_prediction.git`
 2. Create conda env in this repository and activate: 
     - `conda env create --file environment.yml` or `conda create --name pytorch --file req.txt`
     - `conda activate pytorch`
