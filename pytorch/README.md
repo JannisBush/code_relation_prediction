@@ -18,10 +18,10 @@
 ## Reproducibility
 Run the following commands to retrain BERT and reproduce the results.
 First make sure, that you have satisfied all requirements by following the instructions in the main README and the `data` README.
-Not all settings have to be retrained to run run the analysis file. 
+Not all settings have to be retrained to run the analysis file. 
 If no GPU is available, the CPU will be automatically used (training could take a long time).
 If the GPU has less than 8gb of RAM, some scripts will fail with an Out-of-Memory Error.
-Add the option `--gradient-accumulation-steps X` to the script, try X=2 and if still memory errors occur, increase X by 1.
+Add the option `--gradient-accumulation-steps X` to the scripts, try X=2 and if still memory errors occur, increase X by 1 (this might result in not exactly the same results, because of rounding errors), or force the scripts to use the CPU by adding the option `--no_cuda`.
 
 
 ### Comparative Results

@@ -228,6 +228,8 @@ def main():
                     fs = pickle.load(reader)
             # Creates and cache the features.
             except FileNotFoundError:
+                if not os.path.exists(os.path.join(args.data_dir, 'cache')):
+                    os.makedirs(os.path.join(args.data_dir, 'cache'))
                 fs = convert_examples_to_features(
                     exs, label_list, args.max_seq_length, tokenizer)
                 logger.info('Saving {0} features into cached file {1}'.format(mode, cached_features_file))
