@@ -1,7 +1,7 @@
 # Relation Prediction in Argument Mining with Pre-trained Deep Bidirectional Transformers
 
 Code for BA Thesis **Relation Prediction in Argument Mining with Pre-trained Deep Bidirectional Transformers**.
-The training code is based on `pytorch-pretained-bert=0.6.2` (now called [PyTorch-Transformers](https://github.com/huggingface/pytorch-transformers)) .
+The training code is based on `pytorch-pretained-bert==0.6.2` (now called [PyTorch-Transformers](https://github.com/huggingface/pytorch-transformers)) .
 
 ## Structure of this Repository:
 - `data/`: Contains the datasets and converting files for the thesis.

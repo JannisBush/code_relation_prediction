@@ -12,7 +12,7 @@
     - `stats/`: Folder for the statistics and transformations of the datasets.
     - `thesis/`: Will contain all plots and tables used in the thesis (created by `datasets_stats.py` and `../result_pres/thesis_plots_tables.ipynb`)
 - Have to be created:
-    - `datasets/`: Folder to hold the original datasets. (Create all folders: `mkdir datasets; datasets/Agreement datasets/NoDE datasets/Political`)
+    - `datasets/`: Folder to hold the original datasets. (Create all folders: `mkdir datasets; mkdir datasets/Agreement datasets/NoDE datasets/Political`)
         - `Agreement/`: Folder to hold the agreement dataset.
             - Download the dataset from [here](http://hltdistributor.fbk.eu/redirect.php?val=e57613a6b5fe9cb2e0f7a7bfa49c2e41) and extract it into that folder (Final structure `../datasets/Agreement/...tsv`)
         - `NoDE/`: Folder to hold the NoDE datasets.
