@@ -39,14 +39,14 @@ Add the option `--gradient-accumulation-steps X` to the scripts, try X=2 and if 
 - For NoDe: 30 different seeds are used, instead of only 10
 - NoDe + procon (test more data)
     - `./run_all_node.sh procon`
-- Political topic CV (test if works also for "better crossval scheme) 
+- Political topic CV (test if works also for "better" crossval scheme) 
     - `python run_classifier_ba.py  --task_name "political-as-topics" --output_dir res/pol_as_topics/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
     - `python run_classifier_ba.py  --task_name "political-ru-topics" --output_dir res/pol_ru_topics/crossval1 --do_cross_val --do_lower_case --num_train_epochs 5 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
-- Agreement train/test split (test if duplicates + same topics make the task to easy)
+- Agreement train/test split (test if duplicates + same topics make the task too easy)
     - `python run_classifier_ba.py  --task_name "agreement-topics" --output_dir res/agreement_topics_new/train_test1 --do_train --do_eval --do_lower_case --num_train_epochs 3 --max_seq_length 256 --train_batch_size 12 --learning_rate 2e-5`
 - Changes in org + resp:
     - Only makes sense for NoDE and political
-    - Only org + resp:
+    - Only org or resp:
         - NoDE:
             - `./run_all_node.sh only`
         - Political:

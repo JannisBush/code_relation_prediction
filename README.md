@@ -21,7 +21,7 @@ If you are only interested in the results have a look at the thesis or the html 
     - `conda env create --file environment.yml` 
     - `conda activate baenv`
     - `python -m spacy download en_core_wb_sm`
-    - This assumes that a recent version of conda is installed. I recommend, miniconda python3.7 [download here](https://docs.conda.io/en/latest/miniconda.html)
+    - This assumes that a recent version of conda is installed. I recommend miniconda python3.7 [download here](https://docs.conda.io/en/latest/miniconda.html)
 3. Follow the instructions in the `data` folder to download the datasets and convert them.
-4. Follow the instructions in the `pytorch` folder to reproduce the results (optional, for testing purposes only one experiment instead of all could be reproduced)
+4. (Optional) Follow the instructions in the `pytorch` folder to replicate the results (for testing purposes only one experiment instead of all experiments can be replicated)
 5. Start `jupyter-notebook` and then go to the `results_pres` folder and run the two notebooks to see and generate the plots and tables. 
