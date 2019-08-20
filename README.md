@@ -18,8 +18,10 @@ If you are only interested in the results have a look at the thesis or the html 
 1. Clone this repo: 
     - `git clone https://github.com/JannisBush/code_relation_prediction.git`
 2. Create conda env in this repository and activate: 
-    - `conda env create --file environment.yml` or `conda create --name pytorch --file req.txt`
+    - `cd code_relation_prediction`
+    - `conda env create --file environment.yml` 
     - `conda activate pytorch`
+    - `python -m spacy download en_core_wb_sm`
     - This assumes that a recent version of conda is installed. I recommend, miniconda python3.7 [download here](https://docs.conda.io/en/latest/miniconda.html)
 3. Follow the instructions in the `data` folder to download the datasets and convert them.
 4. Follow the instructions in the `pytorch` folder to reproduce the results (optional, for testing purposes only one experiment instead of all could be reproduced)
